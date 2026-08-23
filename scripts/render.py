@@ -37,7 +37,12 @@ def validate_png(path: Path) -> dict[str, object]:
     colorful = sum(count for count, rgba in colors if rgba[3] > 16 and max(rgba[:3]) - min(rgba[:3]) > 24)
     if transparent < pixels * 0.08 or visible < pixels * 0.025 or colorful < 1600:
         raise RuntimeError(f"{path.name}: weak RGBA content t={transparent} v={visible} c={colorful}")
-    return {"size": image.size, "transparent_pct": round(100 * transparent / pixels, 1), "visible_pct": round(100 * visible / pixels, 1), "colorful": colorful}
+    return {
+        "size": image.size,
+        "transparent_pct": round(100 * transparent / pixels, 1),
+        "visible_pct": round(100 * visible / pixels, 1),
+        "colorful": colorful,
+    }
 
 
 def main() -> None:
@@ -46,13 +51,55 @@ def main() -> None:
     OUT.mkdir(exist_ok=True)
     report = []
     for slug, class_name in SCENES.items():
-        run(["manim", "-ql", "-s", "-t", "--disable_caching", "--progress_bar", "none", "--media_dir", str(MEDIA), "--output_file", slug, str(SOURCE), class_name])
+        run(
+            [
+                "manim",
+                "-ql",
+                "-s",
+                "-t",
+                "--disable_caching",
+                "--progress_bar",
+                "none",
+                "--media_dir",
+                str(MEDIA),
+                "--output_file",
+                slug,
+                str(SOURCE),
+                class_name,
+            ]
+        )
         png = OUT / f"{slug}-transparent.png"
         shutil.copy2(newest(f"{slug}*.png"), png)
-        run(["manim", "-ql", "--disable_caching", "--progress_bar", "none", "--media_dir", str(MEDIA), "--output_file", slug, str(SOURCE), class_name])
+        run(
+            [
+                "manim",
+                "-ql",
+                "--disable_caching",
+                "--progress_bar",
+                "none",
+                "--media_dir",
+                str(MEDIA),
+                "--output_file",
+                slug,
+                str(SOURCE),
+                class_name,
+            ]
+        )
         video = OUT / f"{slug}.mp4"
         shutil.copy2(newest(f"{slug}.mp4"), video)
-        probe = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", str(video)], text=True).strip()
+        probe = subprocess.check_output(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=nw=1:nk=1",
+                str(video),
+            ],
+            text=True,
+        ).strip()
         item = {"scene": slug, **validate_png(png), "video_seconds": round(float(probe), 2)}
         print(json.dumps(item))
         report.append(item)

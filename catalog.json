@@ -1,0 +1,14 @@
+[
+  {"id":"algorithm-trace","use":"algorithm education","question":"How does binary search preserve its interval invariant?","family":"trace","complexity":"advanced","tags":["manim","algorithm","search"]},
+  {"id":"fourier-phasors","use":"signal education","question":"How do rotating harmonics synthesize a waveform?","family":"temporal math","complexity":"advanced","tags":["manim","fourier","phasors"]},
+  {"id":"geometric-proof","use":"geometry education","question":"Why does the Pythagorean identity follow by rearrangement?","family":"proof","complexity":"advanced","tags":["manim","geometry","proof"]},
+  {"id":"gradient-descent","use":"ML education","question":"How do adaptive steps converge in a loss basin?","family":"optimization trace","complexity":"advanced","tags":["manim","optimization","gradient"]},
+  {"id":"neural-forward-pass","use":"ML architecture","question":"How do activations move through a residual encoder?","family":"network animation","complexity":"advanced","tags":["manim","neural-network","flow"]},
+  {"id":"sorting-network","use":"parallel algorithms","question":"Which compare-swap stages sort eight inputs?","family":"sorting network","complexity":"advanced","tags":["manim","sorting","parallel"]},
+  {"id":"protocol-state-machine","use":"protocol design","question":"How do retry budgets constrain legal state transitions?","family":"state machine","complexity":"advanced","tags":["manim","protocol","states"]},
+  {"id":"bayesian-update","use":"statistics education","question":"How do prior and likelihood combine into a posterior?","family":"distribution explainer","complexity":"advanced","tags":["manim","bayes","statistics"]},
+  {"id":"orbital-transfer","use":"physics education","question":"How does a two-burn transfer connect circular orbits?","family":"orbital diagram","complexity":"advanced","tags":["manim","orbit","physics"]},
+  {"id":"matrix-transform","use":"linear algebra","question":"How does a matrix transform a basis-aligned polygon?","family":"transform explainer","complexity":"advanced","tags":["manim","matrix","linear-algebra"]},
+  {"id":"queueing-flow","use":"systems education","question":"How do arrivals, queues, workers, and backpressure interact?","family":"process animation","complexity":"advanced","tags":["manim","queue","systems"]},
+  {"id":"l-system-growth","use":"generative education","question":"How does recursive branching produce organic structure?","family":"recursive animation","complexity":"advanced","tags":["manim","l-system","growth"]}
+]
