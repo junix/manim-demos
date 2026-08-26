@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>manim-demos 架构文档</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface-2: #f1f5f9;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --text-soft: #94a3b8;
+    --accent: #0ea5e9;
+    --accent-2: #06b6d4;
+    --accent-soft: #e0f2fe;
+    --rose: #f43f5e;
+    --amber: #f59e0b;
+    --emerald: #10b981;
+    --violet: #8b5cf6;
+    --indigo: #6366f1;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+
+  header.hero {
+    text-align: center;
+    padding: 64px 24px 48px;
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0fdfa 50%, #ede9fe 100%);
+    border-radius: var(--radius);
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header.hero::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(14, 165, 233, 0.12);
+    color: var(--accent);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 56px 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 28px 0 12px;
+    color: var(--text);
+  }
+
+  p { margin-bottom: 16px; color: var(--text); }
+  p.lead { font-size: 17px; color: var(--text-muted); }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .feature-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+
+  .feature-icon.a { background: #e0f2fe; color: var(--accent); }
+  .feature-icon.b { background: #fef3c7; color: var(--amber); }
+  .feature-icon.c { background: #dcfce7; color: var(--emerald); }
+  .feature-icon.d { background: #ede9fe; color: var(--violet); }
+
+  .feature-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  .feature-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .diagram-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin: 24px 0 32px;
+    box-shadow: var(--shadow);
+  }
+
+  .diagram-title {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .diagram-caption {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+
+  .diagram-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .explanation {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .explanation p { font-size: 15px; color: var(--text); }
+  .explanation strong { color: var(--text); }
+
+  .walkthrough {
+    background: linear-gradient(135deg, #f0f9ff 0%, #fdf4ff 100%);
+    border: 1px solid #bae6fd;
+    border-radius: var(--radius);
+    padding: 28px;
+    margin: 24px 0 32px;
+  }
+
+  .walkthrough-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .walkthrough-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  .step-list {
+    list-style: none;
+    counter-reset: step;
+  }
+
+  .step-list li {
+    counter-increment: step;
+    position: relative;
+    padding: 14px 16px 14px 56px;
+    margin-bottom: 10px;
+    background: var(--surface);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 15px;
+  }
+
+  .step-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .step-list li strong { color: var(--text); }
+
+  .tech-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0;
+  }
+
+  .tech-tag {
+    padding: 6px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .note {
+    background: #fffbeb;
+    border-left: 4px solid var(--amber);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 14px;
+    color: #92400e;
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-soft);
+    font-size: 13px;
+  }
+
+  /* SVG animation classes */
+  .fade-in {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .fade-in.visible { opacity: 1; }
+
+  .slide-up {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .slide-up.visible { opacity: 1; transform: translateY(0); }
+
+  .draw-path {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    transition: stroke-dashoffset 1.2s ease;
+  }
+  .draw-path.visible { stroke-dashoffset: 0; }
+
+  .pulse-dot {
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+
+  /* Print styles */
+  @media print {
+    body { background: white; font-size: 12px; }
+    .container { max-width: 100%; padding: 0; }
+    header.hero { padding: 24px 0; background: none; border: 1px solid #ccc; }
+    header.hero::before { display: none; }
+    .diagram-section { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+    .walkthrough { break-inside: avoid; }
+    .feature-card { break-inside: avoid; box-shadow: none; }
+    .fade-in, .slide-up { opacity: 1 !important; transform: none !important; }
+    .draw-path { stroke-dashoffset: 0 !important; }
+    h2 { page-break-after: avoid; }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in, .slide-up { opacity: 1; transform: none; transition: none; }
+    .draw-path { stroke-dashoffset: 0; transition: none; }
+    .feature-card:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="hero">
+    <div class="badge">可视化教学 · Manim 场景集</div>
+    <h1>manim-demos 架构文档</h1>
+    <p class="subtitle">十二个解释性参考场景的透明 PNG 与短时动画集合，以可程序化复现的方式交付数学、算法与系统概念的可视化论证。</p>
+  </header>
+
+  <h2>产品概述</h2>
+  <p class="lead">
+    <strong>manim-demos</strong> 是一个基于 <strong>Manim</strong>（数学动画引擎）构建的教学可视化场景集合。
+    每个场景围绕一个具体的知识问题展开——从二分查找的区间不变性，到傅里叶级数的相量合成，再到贝叶斯更新的分布演化——
+    并以两种形式交付：<strong>透明背景 PNG</strong>（主产物，用于文档、幻灯片嵌入）和
+    <strong>低分辨率 MP4</strong>（辅产物，保留时间维度的论证过程）。
+  </p>
+  <p>
+    项目采用「目录驱动 + 脚本渲染 + 契约测试」的极简架构：场景定义集中在一个源文件中，渲染流程由一个 Python 脚本统一调度，
+    输出质量通过像素级校验和文件契约测试双重保障。所有产物均纳入版本控制，确保可追溯、可复现。
+  </p>
+
+  <h3>核心特性</h3>
+  <div class="feature-grid">
+    <div class="feature-card slide-up">
+      <div class="feature-icon a">12</div>
+      <div class="feature-title">十二种教学场景</div>
+      <div class="feature-desc">覆盖算法、信号、几何、优化、神经网络、协议、统计、物理、线性代数、系统、生成式等十余个知识领域。</div>
+    </div>
+    <div class="feature-card slide-up">
+      <div class="feature-icon b">PNG</div>
+      <div class="feature-title">透明主产物</div>
+      <div class="feature-desc">每个场景输出带 alpha 通道的 PNG，可直接嵌入任意背景的文档、PPT 或网页，无需二次抠图。</div>
+    </div>
+    <div class="feature-card slide-up">
+      <div class="feature-icon c">MP4</div>
+      <div class="feature-title">过程动画</div>
+      <div class="feature-desc">低分辨率短视频展示完整的时间性论证，让静态图示背后的推理过程可见、可回放。</div>
+    </div>
+    <div class="feature-card slide-up">
+      <div class="feature-icon d">✓</div>
+      <div class="feature-title">质量契约</div>
+      <div class="feature-desc">渲染后自动校验 PNG 透明度、可见像素与色彩丰富度，并通过 pytest 确保产物文件齐全。</div>
+    </div>
+  </div>
+
+  <h3>技术栈</h3>
+  <div class="tech-stack">
+    <span class="tech-tag">Python 3.13+</span>
+    <span class="tech-tag">Manim 0.20</span>
+    <span class="tech-tag">Pillow</span>
+    <span class="tech-tag">NumPy</span>
+    <span class="tech-tag">uv</span>
+    <span class="tech-tag">pytest</span>
+    <span class="tech-tag">ruff</span>
+    <span class="tech-tag">ffprobe</span>
+    <span class="tech-tag">Cairo</span>
+  </div>
+
+  <!-- ==================== Diagram 1: Layered Architecture ==================== -->
+  <h2>架构总览</h2>
+
+  <div class="diagram-section">
+    <div class="diagram-title">图 1 · 分层架构</div>
+    <div class="diagram-caption">从场景元数据到最终产物的四层结构：数据定义、场景实现、渲染调度、输出交付。</div>
+
+    <svg class="diagram-svg" viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g-catalog" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fef3c7"/>
+          <stop offset="100%" stop-color="#fde68a"/>
+        </linearGradient>
+        <linearGradient id="g-scenes" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#dbeafe"/>
+          <stop offset="100%" stop-color="#bfdbfe"/>
+        </linearGradient>
+        <linearGradient id="g-render" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#dcfce7"/>
+          <stop offset="100%" stop-color="#bbf7d0"/>
+        </linearGradient>
+        <linearGradient id="g-out" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ede9fe"/>
+          <stop offset="100%" stop-color="#ddd6fe"/>
+        </linearGradient>
+        <filter id="shadow1" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.08"/>
+        </filter>
+        <marker id="arrow1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+        </marker>
+      </defs>
+
+      <!-- Layer 4: catalog.json -->
+      <g class="fade-in" data-delay="0">
+        <rect x="80" y="20" width="640" height="60" rx="10" fill="url(#g-catalog)" stroke="#f59e0b" stroke-width="1.5" filter="url(#shadow1)"/>
+        <text x="400" y="45" text-anchor="middle" font-size="15" font-weight="600" fill="#92400e">catalog.json</text>
+        <text x="400" y="65" text-anchor="middle" font-size="12" fill="#b45309">场景元数据 · 教学用途 · 问题 · 标签</text>
+        <text x="120" y="52" font-size="11" fill="#b45309">📋 数据层</text>
+      </g>
+
+      <!-- Layer 3: scenes.py -->
+      <g class="fade-in" data-delay="150">
+        <rect x="80" y="110" width="640" height="80" rx="10" fill="url(#g-scenes)" stroke="#3b82f6" stroke-width="1.5" filter="url(#shadow1)"/>
+        <text x="400" y="138" text-anchor="middle" font-size="15" font-weight="600" fill="#1e40af">scenes.py — 12 个 Manim Scene 子类</text>
+        <text x="400" y="158" text-anchor="middle" font-size="12" fill="#2563eb">AlgorithmTrace · FourierPhasors · GeometricProof · GradientDescent · NeuralForwardPass ...</text>
+        <text x="120" y="135" font-size="11" fill="#2563eb">🎬 场景层</text>
+      </g>
+
+      <!-- Layer 2: render.py -->
+      <g class="fade-in" data-delay="300">
+        <rect x="80" y="220" width="640" height="80" rx="10" fill="url(#g-render)" stroke="#10b981" stroke-width="1.5" filter="url(#shadow1)"/>
+        <text x="400" y="248" text-anchor="middle" font-size="15" font-weight="600" fill="#065f46">scripts/render.py — 渲染调度器</text>
+        <text x="400" y="268" text-anchor="middle" font-size="12" fill="#047857">双次 Manim 调用 · PNG 拷贝 · 视频拷贝 · 像素级校验 · ffprobe 时长</text>
+        <text x="120" y="245" font-size="11" fill="#047857">⚙️ 调度层</text>
+      </g>
+
+      <!-- Layer 1: output -->
+      <g class="fade-in" data-delay="450">
+        <rect x="80" y="330" width="640" height="70" rx="10" fill="url(#g-out)" stroke="#8b5cf6" stroke-width="1.5" filter="url(#shadow1)"/>
+        <text x="400" y="358" text-anchor="middle" font-size="15" font-weight="600" fill="#5b21b6">out/ — 交付产物</text>
+        <text x="400" y="380" text-anchor="middle" font-size="12" fill="#7c3aed">12 × transparent.png + 12 × .mp4 = 24 个文件纳入版本控制</text>
+        <text x="120" y="355" font-size="11" fill="#7c3aed">📦 交付层</text>
+      </g>
+
+      <!-- Arrows between layers -->
+      <g class="draw-path" data-delay="100">
+        <line x1="400" y1="80" x2="400" y2="110" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow1)"/>
+      </g>
+      <g class="draw-path" data-delay="250">
+        <line x1="400" y1="190" x2="400" y2="220" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow1)"/>
+      </g>
+      <g class="draw-path" data-delay="400">
+        <line x1="400" y1="300" x2="400" y2="330" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow1)"/>
+      </g>
+
+      <!-- Side: test contract -->
+      <g class="fade-in" data-delay="600">
+        <rect x="690" y="335" width="90" height="60" rx="8" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5" filter="url(#shadow1)"/>
+        <text x="735" y="360" text-anchor="middle" font-size="12" font-weight="600" fill="#9d174d">test_contract</text>
+        <text x="735" y="378" text-anchor="middle" font-size="10" fill="#be185d">pytest 校验</text>
+      </g>
+      <path class="draw-path" data-delay="650" d="M 640 360 Q 665 360 690 360" stroke="#ec4899" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+    </svg>
+
+    <div class="explanation">
+      <p>
+        <strong>四层自顶向下的单向数据流。</strong>最顶层的 <code>catalog.json</code> 是场景元数据的唯一真相源，
+        记录每个场景的教学用途、核心问题、视觉家族、复杂度和标签——它不参与代码运行，而是作为文档索引和发现机制存在。
+      </p>
+      <p>
+        <strong>场景层（scenes.py）</strong>是项目的核心资产。十二个 Manim <code>Scene</code> 子类在同一个文件中定义，
+        共享统一的配色（墨青、琥珀、玫瑰、靛蓝、紫罗兰）和标题块样式，确保视觉语言一致。
+        每个类在 <code>__init__.py</code> 的 <code>SCENES</code> 字典中注册，slug 到类名的映射是渲染器查找场景的唯一入口。
+      </p>
+      <p>
+        <strong>调度层（render.py）</strong>是连接场景定义与最终产物的桥梁。它遍历 <code>SCENES</code> 字典，
+        对每个场景执行两次 Manim 渲染（静帧 + 动画），将产物从临时媒体目录拷贝到 <code>out/</code>，
+        并运行像素级和视频时长校验。这一层是「构建系统」的全部——没有 Makefile，没有 CI 配置，
+        一个脚本即完整流水线。
+      </p>
+      <p>
+        <strong>交付层（out/）</strong>存放最终产物。24 个文件（12 PNG + 12 MP4）全部纳入 Git 管理，
+        使下游消费者可以直接引用，而无需本地搭建 Manim 环境。右侧的 <code>test_contract.py</code>
+        是质量守门人：它确保每个已注册的场景都有对应产物，且视频文件非空。
+      </p>
+    </div>
+  </div>
+
+  <!-- ==================== Diagram 2: Render Pipeline ==================== -->
+  <h2>渲染流水线</h2>
+
+  <div class="diagram-section">
+    <div class="diagram-title">图 2 · 单场景双次渲染流水线</div>
+    <div class="diagram-caption">每个场景经历两次 Manim 调用，分别产出透明静帧和过程动画，随后经过双重校验。</div>
+
+    <svg class="diagram-svg" viewBox="0 0 800 460" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g-pass1" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#bae6fd"/>
+          <stop offset="100%" stop-color="#7dd3fc"/>
+        </linearGradient>
+        <linearGradient id="g-pass2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#c4b5fd"/>
+          <stop offset="100%" stop-color="#a78bfa"/>
+        </linearGradient>
+        <linearGradient id="g-validate" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#86efac"/>
+          <stop offset="100%" stop-color="#4ade80"/>
+        </linearGradient>
+        <marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+        </marker>
+      </defs>
+
+      <!-- Start: scene entry -->
+      <g class="fade-in" data-delay="0">
+        <circle cx="60" cy="60" r="28" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+        <text x="60" y="65" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">场景</text>
+      </g>
+
+      <!-- Pass 1: Last-frame render -->
+      <g class="slide-up" data-delay="200">
+        <rect x="120" y="20" width="280" height="100" rx="10" fill="url(#g-pass1)" stroke="#0284c7" stroke-width="1.5" filter="url(#shadow1)"/>
+        <text x="260" y="48" text-anchor="middle" font-size="14" font-weight="600" fill="#0c4a6e">第一次渲染 · 末帧透明 PNG</text>
+        <text x="140" y="72" font-size="11" fill="#0369a1">manim -ql -s -t</text>
+        <text x="140" y="88" font-size="11" fill="#0369a1">--disable_caching</text>
+        <text x="280" y="72" font-size="11" fill="#0369a1">低分辨率 · 末帧模式</text>
+        <text x="280" y="88" font-size="11" fill="#0369a1">透明背景 (-t)</text>
+        <text x="260" y="108" text-anchor="middle" font-size="11" fill="#075985">输出至 media/ 临时目录</text>
+      </g>
+
+      <!-- Arrow start -> pass1 -->
+      <line class="draw-path" data-delay="100" x1="88" y1="60" x2="120" y2="60" stroke="#64748b" stroke-width="2" marker-end="url(#arrow2)"/>
+
+      <!-- PNG copy -->
+      <g class="fade-in" data-delay="500">
+        <rect x="430" y="45" width="130" height="50" rx="8" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.5"/>
+        <text x="495" y="67" text-anchor="middle" font-size="12" font-weight="600" fill="#0369a1">拷贝 PNG 到 out/</text>
+        <text x="495" y="84" text-anchor="middle" font-size="10" fill="#0284c7">slug-transparent.png</text>
+      </g>
+      <line class="draw-path" data-delay="400" x1="400" y1="60" x2="430" y2="60" stroke="#64748b" stroke-width="2" marker-end="url(#arrow2)"/>
+
+      <!-- Pass 2: Full video render -->
+      <g class="slide-up" data-delay="700">
+        <rect x="120" y="160" width="280" height="100" rx="10" fill="url(#g-pass2)" stroke="#7c3aed" stroke-width="1.5" filter="url(#shadow1)"/>
+        <text x="260" y="188" text-anchor="middle" font-size="14" font-weight="600" fill="#4c1d95">第二次渲染 · 完整动画 MP4</text>
+        <text x="140" y="212" font-size="11" fill="#6d28d9">manim -ql</text>
+        <text x="140" y="228" font-size="11" fill="#6d28d9">--disable_caching</text>
+        <text x="280" y="212" font-size="11" fill="#6d28d9">低分辨率 · 完整动画</text>
+        <text x="280" y="228" font-size="11" fill="#6d28d9">保留时间论证</text>
+        <text x="260" y="248" text-anchor="middle" font-size="11" fill="#5b21b6">输出至 media/ 临时目录</text>
+      </g>
+
+      <!-- Vertical arrow: pass1 -> pass2 -->
+      <path class="draw-path" data-delay="600" d="M 260 120 L 260 140 L 180 140 L 180 160" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+
+      <!-- MP4 copy -->
+      <g class="fade-in" data-delay="1000">
+        <rect x="430" y="185" width="130" height="50" rx="8" fill="#ede9fe" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="495" y="207" text-anchor="middle" font-size="12" font-weight="600" fill="#6d28d9">拷贝 MP4 到 out/</text>
+        <text x="495" y="224" text-anchor="middle" font-size="10" fill="#7c3aed">slug.mp4</text>
+      </g>
+      <line class="draw-path" data-delay="900" x1="400" y1="200" x2="430" y2="200" stroke="#64748b" stroke-width="2" marker-end="url(#arrow2)"/>
+
+      <!-- Validation block -->
+      <g class="slide-up" data-delay="1200">
+        <rect x="590" y="100" width="190" height="180" rx="10" fill="url(#g-validate)" stroke="#16a34a" stroke-width="1.5" filter="url(#shadow1)"/>
+        <text x="685" y="128" text-anchor="middle" font-size="14" font-weight="600" fill="#14532d">质量校验</text>
+
+        <!-- PNG validation -->
+        <rect x="600" y="140" width="170" height="55" rx="6" fill="white" fill-opacity="0.6" stroke="#22c55e" stroke-width="1"/>
+        <text x="685" y="158" text-anchor="middle" font-size="12" font-weight="600" fill="#166534">PNG 像素校验</text>
+        <text x="610" y="175" font-size="10" fill="#15803d">透明度 &gt; 8%</text>
+        <text x="610" y="188" font-size="10" fill="#15803d">可见像素 &gt; 2.5%</text>
+
+        <!-- Video validation -->
+        <rect x="600" y="205" width="170" height="55" rx="6" fill="white" fill-opacity="0.6" stroke="#22c55e" stroke-width="1"/>
+        <text x="685" y="223" text-anchor="middle" font-size="12" font-weight="600" fill="#166534">视频时长校验</text>
+        <text x="610" y="242" font-size="10" fill="#15803d">ffprobe 读 duration</text>
+        <text x="610" y="255" font-size="10" fill="#15803d">输出 JSON 报告</text>
+      </g>
+
+      <!-- Arrows into validation -->
+      <path class="draw-path" data-delay="1100" d="M 560 70 Q 575 100 590 130" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+      <path class="draw-path" data-delay="1150" d="M 560 210 Q 575 205 590 190" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+
+      <!-- Final output -->
+      <g class="fade-in" data-delay="1400">
+        <rect x="300" y="350" width="200" height="70" rx="10" fill="#fdf2f8" stroke="#ec4899" stroke-width="2" filter="url(#shadow1)"/>
+        <text x="400" y="378" text-anchor="middle" font-size="14" font-weight="700" fill="#9d174d">out/ 交付产物</text>
+        <text x="400" y="398" text-anchor="middle" font-size="12" fill="#be185d">PNG + MP4 + 报告 JSON</text>
+      </g>
+
+      <path class="draw-path" data-delay="1350" d="M 685 280 L 685 320 Q 685 340 665 350 L 500 370" stroke="#ec4899" stroke-width="2" fill="none" stroke-dasharray="5 3" marker-end="url(#arrow2)"/>
+
+      <!-- Fail path -->
+      <g class="fade-in" data-delay="1500">
+        <text x="685" y="310" text-anchor="middle" font-size="11" fill="#dc2626" font-weight="500">校验失败 → 终止 (RuntimeError)</text>
+      </g>
+    </svg>
+
+    <div class="explanation">
+      <p>
+        <strong>双次渲染是本项目的核心设计决策。</strong>第一次调用 <code>manim -ql -s -t</code>
+        （低质量 + 末帧模式 + 透明背景）渲染场景的最后一帧为带 alpha 通道的 PNG。
+        <code>-s</code>（<code>--skip_animations</code> 的变体，仅渲染末帧）让这一步极快，
+        同时 <code>-t</code>（透明）确保 PNG 可以无缝嵌入任意背景。
+      </p>
+      <p>
+        <strong>第二次调用 <code>manim -ql</code></strong> 渲染完整动画为 MP4。两次调用共享
+        <code>--disable_caching</code> 和 <code>--progress_bar none</code> 标志：
+        前者避免缓存导致的陈旧产物，后者让脚本输出保持简洁。
+        两次渲染的中间产物都存放在 <code>media/</code> 临时目录中，由 <code>newest()</code>
+        函数按修改时间定位最新匹配文件，再拷贝到 <code>out/</code> 的最终位置。
+      </p>
+      <p>
+        <strong>质量校验是不可跳过的守门环节。</strong>PNG 校验使用 Pillow 读取 alpha 通道直方图，
+        三个阈值确保产物有效：透明像素 &gt; 8%（真的有透明背景，而非全不透明）、
+        可见像素 &gt; 2.5%（不是空白图）、色彩丰富度 &gt; 1600 像素（不是单色占位图）。
+        视频校验使用 <code>ffprobe</code> 读取时长，写入 JSON 报告。
+        任何一项失败都会抛出 <code>RuntimeError</code>，中断整个渲染流程。
+      </p>
+
+      <div class="note">
+        <strong>设计权衡：</strong>为什么不一次渲染同时拿 PNG 和 MP4？因为 Manim 的 <code>-s</code> 末帧模式
+        走的是 Cairo 光栅化路径（速度快、alpha 精确），而视频渲染走 FFmpeg 编码路径。
+        分开调用可以各自独立调优参数，且末帧 PNG 的视觉质量与视频末帧不完全等价——
+        前者是专门为静态嵌入优化的。
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Diagram 3: Quality Loop ==================== -->
+  <h2>质量保障闭环</h2>
+
+  <div class="diagram-section">
+    <div class="diagram-title">图 3 · 三层质量保障体系</div>
+    <div class="diagram-caption">从代码静态检查到渲染时校验，再到契约测试，三层防护确保产物完整性。</div>
+
+    <svg class="diagram-svg" viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g-ring1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fef3c7"/>
+          <stop offset="100%" stop-color="#fde68a"/>
+        </linearGradient>
+        <linearGradient id="g-ring2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#bfdbfe"/>
+          <stop offset="100%" stop-color="#93c5fd"/>
+        </linearGradient>
+        <linearGradient id="g-ring3" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#bbf7d0"/>
+          <stop offset="100%" stop-color="#86efac"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Center: out/ artifacts -->
+      <g class="fade-in" data-delay="0">
+        <circle cx="400" cy="170" r="60" fill="#fce7f3" stroke="#ec4899" stroke-width="2.5" filter="url(#shadow1)"/>
+        <text x="400" y="160" text-anchor="middle" font-size="13" font-weight="700" fill="#9d174d">out/ 产物</text>
+        <text x="400" y="180" text-anchor="middle" font-size="11" fill="#be185d">12 PNG + 12 MP4</text>
+        <text x="400" y="195" text-anchor="middle" font-size="10" fill="#db2777">纳入 Git</text>
+      </g>
+
+      <!-- Ring 1: ruff static check -->
+      <g class="draw-path" data-delay="300">
+        <circle cx="400" cy="170" r="100" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="8 4"/>
+      </g>
+      <g class="fade-in" data-delay="400">
+        <rect x="250" y="60" width="120" height="40" rx="8" fill="url(#g-ring1)" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="310" y="78" text-anchor="middle" font-size="12" font-weight="600" fill="#92400e">① ruff 静态检查</text>
+        <text x="310" y="93" text-anchor="middle" font-size="10" fill="#b45309">代码风格 · 质量</text>
+      </g>
+
+      <!-- Ring 2: render-time validation -->
+      <g class="draw-path" data-delay="600">
+        <circle cx="400" cy="170" r="150" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-dasharray="8 4"/>
+      </g>
+      <g class="fade-in" data-delay="700">
+        <rect x="550" y="90" width="180" height="60" rx="8" fill="url(#g-ring2)" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="640" y="112" text-anchor="middle" font-size="12" font-weight="600" fill="#1e40af">② 渲染时像素校验</text>
+        <text x="560" y="132" font-size="10" fill="#2563eb">透明度 / 可见像素</text>
+        <text x="560" y="146" font-size="10" fill="#2563eb">色彩丰富度 / 视频时长</text>
+      </g>
+
+      <!-- Ring 3: pytest contract -->
+      <g class="draw-path" data-delay="900">
+        <circle cx="400" cy="170" r="200" fill="none" stroke="#10b981" stroke-width="2.5" stroke-dasharray="8 4"/>
+      </g>
+      <g class="fade-in" data-delay="1000">
+        <rect x="560" y="260" width="180" height="60" rx="8" fill="url(#g-ring3)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="650" y="282" text-anchor="middle" font-size="12" font-weight="600" fill="#065f46">③ pytest 契约测试</text>
+        <text x="570" y="302" font-size="10" fill="#047857">场景数 ≥ 12</text>
+        <text x="570" y="316" font-size="10" fill="#047857">每场景双产物齐全</text>
+      </g>
+
+      <!-- Annotations -->
+      <g class="fade-in" data-delay="1200">
+        <text x="310" y="32" text-anchor="middle" font-size="11" fill="#b45309" font-weight="500">代码层</text>
+        <text x="640" y="82" text-anchor="middle" font-size="11" fill="#2563eb" font-weight="500">渲染层</text>
+        <text x="650" y="330" text-anchor="middle" font-size="11" fill="#047857" font-weight="500">交付层</text>
+      </g>
+
+      <!-- Arrows showing inward protection -->
+      <g class="draw-path" data-delay="1300">
+        <path d="M 370 60 L 385 90" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+      </g>
+      <g class="draw-path" data-delay="1400">
+        <path d="M 550 120 L 480 145" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow2)"/>
+      </g>
+      <g class="draw-path" data-delay="1500">
+        <path d="M 560 260 L 460 210" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow2)"/>
+      </g>
+    </svg>
+
+    <div class="explanation">
+      <p>
+        <strong>三层同心圆式的质量保障，由内向外分别对应交付层、渲染层和代码层。</strong>
+        中心是最终交付的 <code>out/</code> 产物——所有质量工作最终都指向这 24 个文件的正确性和完整性。
+      </p>
+      <p>
+        <strong>最内层（代码层）：ruff 静态检查。</strong>确保 Python 代码符合风格规范、
+        无未使用导入、无潜在逻辑问题。这是最轻量的一层，运行耗时毫秒级，
+        在开发迭代中可以高频执行。
+      </p>
+      <p>
+        <strong>中间层（渲染层）：渲染时像素级校验。</strong>这是最核心的质量门——
+        它不检查代码，而是检查产物本身。通过 Pillow 分析 PNG 的 alpha 直方图和色彩分布，
+        可以捕获「场景构建为空」「透明背景没开」「渲染失败但产出了空白帧」等
+        仅靠文件存在性检查发现不了的问题。视频时长校验则确保动画不是 0 秒的空文件。
+      </p>
+      <p>
+        <strong>最外层（交付层）：pytest 契约测试。</strong><code>test_contract.py</code>
+        只有一个测试函数，但它守住了最关键的契约：场景数量不少于 12 个，
+        每个已注册场景都有对应的 PNG 和 MP4 文件，且视频大小超过 10KB。
+        这层测试在 CI 或克隆仓库后可以快速验证产物完整性，无需重新渲染。
+      </p>
+    </div>
+  </div>
+
+  <!-- ==================== Main Walkthrough ==================== -->
+  <h2>主走查：渲染单场景</h2>
+
+  <div class="walkthrough">
+    <div class="walkthrough-label">主走查 · MAIN WALKTHROUGH</div>
+    <div class="walkthrough-title">渲染单场景（以 algorithm-trace 为例）</div>
+    <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 15px;">
+      从命令触发到产物落地，一个场景完整经历的五个关键步骤。
+    </p>
+
+    <ol class="step-list">
+      <li>
+        <strong>启动渲染脚本。</strong>执行 <code>uv run python scripts/render.py</code>，
+        脚本首先检查 <code>ffprobe</code> 是否可用（缺失则直接退出），
+        创建 <code>out/</code> 目录，然后从 <code>manim_demos.SCENES</code>
+        字典中按顺序取出第一个条目：<code>("algorithm-trace", "AlgorithmTrace")</code>。
+      </li>
+      <li>
+        <strong>第一次 Manim 调用（末帧 PNG）。</strong>脚本构造命令
+        <code>manim -ql -s -t --disable_caching --media_dir media --output_file algorithm-trace scenes.py AlgorithmTrace</code>，
+        以末帧模式渲染透明背景的 PNG 到 <code>media/</code> 临时目录。
+        完成后用 <code>newest()</code> 定位最新 PNG，拷贝为
+        <code>out/algorithm-trace-transparent.png</code>。
+      </li>
+      <li>
+        <strong>第二次 Manim 调用（完整动画）。</strong>脚本构造命令
+        <code>manim -ql --disable_caching --media_dir media --output_file algorithm-trace scenes.py AlgorithmTrace</code>，
+        以低质量模式渲染完整 MP4 动画。同样通过 <code>newest()</code> 定位视频文件，
+        拷贝为 <code>out/algorithm-trace.mp4</code>。
+      </li>
+      <li>
+        <strong>双重校验。</strong>先用 Pillow 打开 PNG，计算透明像素占比（需 &gt; 8%）、
+        可见像素占比（需 &gt; 2.5%）和色彩丰富度（需 &gt; 1600 像素）；
+        再用 <code>ffprobe</code> 读取视频时长。两项都通过后，将元数据写入 JSON 报告并打印。
+      </li>
+      <li>
+        <strong>循环推进 / 结束。</strong>当前场景处理完毕，脚本继续处理下一个场景
+        （<code>fourier-phasors</code>），直到全部 12 个场景完成。
+        最终打印汇总 JSON 报告。后续可通过 <code>pytest</code> 运行契约测试，
+        确认所有产物齐全。
+      </li>
+    </ol>
+  </div>
+
+  <h2>设计要点</h2>
+
+  <h3>为什么用单文件承载所有场景？</h3>
+  <p>
+    12 个场景全部定义在 <code>scenes.py</code> 一个文件中，而非按场景拆分为多个模块。
+    这是一个有意的选择：场景之间共享大量样式辅助函数（如 <code>title_block</code>）和配色常量，
+    放在一起便于保持视觉一致性，也便于跨场景复用图案元素。
+    对于演示/示例类项目，单文件的认知成本远低于多模块导航成本。
+  </p>
+
+  <h3>为什么产物纳入 Git？</h3>
+  <p>
+    <code>out/</code> 目录下的 PNG 和 MP4 全部提交到版本库。这看起来违反「构建产物不入库」的常规，
+    但本项目的定位是「可视化参考集」——消费者（文档、幻灯片、网页）需要的是图，而不是构建图的能力。
+    将产物入库意味着任何克隆仓库的人都能立即使用这些图示，无需安装 Manim、配置 LaTeX、
+    等待渲染。渲染脚本仍然保留，用于修改场景后重新生成产物。
+  </p>
+
+  <h3>catalog.json 的角色</h3>
+  <p>
+    <code>catalog.json</code> 是一个纯元数据文件，不参与代码运行。它的作用是「索引」——
+    让外部工具或人工浏览可以快速了解每个场景的教学用途、核心问题和标签，
+    而无需逐个打开视频或阅读源码。这是文档即数据的实践：用结构化 JSON 替代散落在各处的描述文本。
+  </p>
+
+  <footer>
+    manim-demos · 架构文档 · 生成于 2026-08
+  </footer>
+
+</div>
+
+<script>
+(function() {
+  // Graceful degradation: if JS fails, CSS handles basic layout.
+  // This script adds scroll-triggered animations for elements with
+  // .fade-in, .slide-up, and .draw-path classes.
+
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function animateOnScroll() {
+    var elements = document.querySelectorAll('.fade-in, .slide-up, .draw-path');
+    if (!elements.length) return;
+
+    // If IntersectionObserver is not available, just show everything.
+    if (!('IntersectionObserver' in window)) {
+      for (var i = 0; i < elements.length; i++) {
+        elements[i].classList.add('visible');
+      }
+      return;
+    }
+
+    var observer = new IntersectionObserver(function(entries) {
+      for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i];
+        if (entry.isIntersecting) {
+          var el = entry.target;
+          var delay = parseInt(el.getAttribute('data-delay') || '0', 10);
+          if (prefersReducedMotion) {
+            el.classList.add('visible');
+          } else {
+            setTimeout(function(target) {
+              target.classList.add('visible');
+            }, delay, el);
+          }
+          observer.unobserve(el);
+        }
+      }
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    for (var i = 0; i < elements.length; i++) {
+      observer.observe(elements[i]);
+    }
+  }
+
+  // Run when DOM is ready.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', animateOnScroll);
+  } else {
+    animateOnScroll();
+  }
+
+  // Feature-card hover pulse (skip if reduced motion)
+  if (!prefersReducedMotion) {
+    var cards = document.querySelectorAll('.feature-card');
+    for (var i = 0; i < cards.length; i++) {
+      (function(card) {
+        card.addEventListener('mouseenter', function() {
+          card.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease';
+        });
+      })(cards[i]);
+    }
+  }
+})();
+</script>
+</body>
+</html>

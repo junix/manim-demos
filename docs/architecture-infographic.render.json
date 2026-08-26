@@ -1,0 +1,57 @@
+{
+  "project": "manim-demos",
+  "type": "architecture-infographic",
+  "source": "architecture-infographic.tex",
+  "engine": "xelatex + tikz",
+  "rendered_at": "2026-08-24",
+  "language": "zh-CN",
+  "outputs": [
+    {
+      "file": "architecture-infographic.pdf",
+      "format": "pdf",
+      "size_bytes": 103424,
+      "pages": 1
+    },
+    {
+      "file": "architecture-infographic.svg",
+      "format": "svg",
+      "size_bytes": 1048576,
+      "renderer": "pdftocairo"
+    },
+    {
+      "file": "architecture-infographic.png",
+      "format": "png",
+      "size_bytes": 528384,
+      "width": 2624,
+      "height": 1754,
+      "dpi": 150,
+      "renderer": "pdftoppm"
+    }
+  ],
+  "sections": [
+    "01 · 十二场景目录 — 12 个 Manim 场景按 4 个视觉家族分组",
+    "02 · 渲染管线 — catalog + scenes.py → render.py 双次调用 Manim → 质量校验 → out/ 交付物",
+    "03 · 设计哲学与测试契约 — 双输出设计 (PNG 主 / MP4 辅) + pytest 契约测试 + 技术栈"
+  ],
+  "palette": {
+    "background": "#0b1220",
+    "panel": "#111a2e",
+    "ink": "#e8f5fb",
+    "muted": "#7f9fb4",
+    "accent_cyan": "#54d6c6",
+    "accent_amber": "#ffd166",
+    "accent_rose": "#ff6f91",
+    "accent_indigo": "#7b9cff",
+    "accent_violet": "#b889ff",
+    "accent_green": "#6ee7a7"
+  },
+  "family_colors": {
+    "trace": "#54d6c6",
+    "math": "#b889ff",
+    "network": "#ffd166",
+    "process": "#ff6f91"
+  },
+  "scenes_covered": 12,
+  "visual_families": 4,
+  "build_command": "xelatex -interaction=nonstopmode architecture-infographic.tex"
+}

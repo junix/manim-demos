@@ -1,0 +1,297 @@
+% manim-demos architecture infographic
+% Build: xelatex -interaction=nonstopmode architecture-infographic.tex
+%        dvisvgm --pdf architecture-infographic.pdf
+%        pdftoppm -png -r 150 architecture-infographic.pdf architecture-infographic
+
+\documentclass[tikz,border=0pt,12pt]{standalone}
+\usepackage{xeCJK}
+\usepackage{fontspec}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usetikzlibrary{
+  positioning,
+  shapes.geometric,
+  shapes.misc,
+  arrows.meta,
+  calc,
+  fit,
+  backgrounds,
+  decorations.pathreplacing,
+  decorations.text,
+  shadows,
+  fadings,
+}
+
+\setCJKmainfont{PingFang SC}
+\setmainfont{Avenir Next}
+\setsansfont{Avenir Next}
+
+% ---- color palette ----
+\definecolor{bg}{HTML}{0b1220}
+\definecolor{panel}{HTML}{111a2e}
+\definecolor{panel2}{HTML}{162240}
+\definecolor{ink}{HTML}{e8f5fb}
+\definecolor{muted}{HTML}{7f9fb4}
+\definecolor{line}{HTML}{2a3a5c}
+\definecolor{cyan}{HTML}{54d6c6}
+\definecolor{amber}{HTML}{ffd166}
+\definecolor{rose}{HTML}{ff6f91}
+\definecolor{indigo}{HTML}{7b9cff}
+\definecolor{violet}{HTML}{b889ff}
+\definecolor{green}{HTML}{6ee7a7}
+\definecolor{orange}{HTML}{ff9f6b}
+
+% trace = cyan, math = violet, network/flow = amber, process/growth = rose
+\definecolor{famTrace}{HTML}{54d6c6}
+\definecolor{famMath}{HTML}{b889ff}
+\definecolor{famNet}{HTML}{ffd166}
+\definecolor{famProc}{HTML}{ff6f91}
+
+\begin{document}
+\begin{tikzpicture}[
+  node distance=0.6cm,
+  every node/.style={inner sep=0, outer sep=0},
+  text=ink,
+]
+
+% ---- canvas ----
+\fill[bg] (0,0) rectangle (42,29.7);
+
+% ============================================================
+% HEADER
+% ============================================================
+\node[anchor=north west, font=\Huge\bfseries, text=ink] at (1.2, 28.2) {manim-demos};
+\node[anchor=north west, font=\large, text=muted] at (1.2, 27.0)
+  {用 Manim 构建的 12 个解释性参考场景 · 透明 PNG 为主交付，MP4 保留时间论证};
+
+\draw[line width=0.8pt, line] (1.2, 26.4) -- (40.8, 26.4);
+
+% ---- family legend ----
+\node[anchor=north east, font=\small, text=muted] at (40.8, 28.3) {视觉家族};
+\begin{scope}[shift={(38.5, 27.2)}]
+  \fill[famTrace] (0,0) rectangle (0.35, 0.35);
+  \node[anchor=west, font=\footnotesize, text=ink] at (0.5, 0.175) {追踪 / Trace};
+  \fill[famMath] (3.2,0) rectangle (3.55, 0.35);
+  \node[anchor=west, font=\footnotesize, text=ink] at (3.7, 0.175) {数学 / Math};
+  \fill[famNet] (0,-0.5) rectangle (0.35, -0.15);
+  \node[anchor=west, font=\footnotesize, text=ink] at (0.5, -0.325) {网络 / Net};
+  \fill[famProc] (3.2,-0.5) rectangle (3.55, -0.15);
+  \node[anchor=west, font=\footnotesize, text=ink] at (3.7, -0.325) {过程 / Process};
+\end{scope}
+
+% ============================================================
+% SECTION 1 — 十二场景目录 (4x3 grid)
+% ============================================================
+\node[anchor=north west, font=\LARGE\bfseries, text=ink] at (1.2, 25.6) {01 · 十二场景目录};
+\node[anchor=north west, font=\small, text=muted] at (1.2, 24.75)
+  {按视觉家族组织的解释性场景，每个回答一个具体的"为什么 / 如何"问题};
+
+% 4 columns x 3 rows of scene cards
+% card size: 9.2 x 2.5
+\newcommand{\scenecard}[6]{
+  % #1 = x, #2 = y, #3 = id, #4 = title (cn), #5 = question, #6 = family color
+  \begin{scope}[shift={(#1, #2)}]
+    \fill[panel, rounded corners=4pt] (0,0) rectangle (9.2, 2.5);
+    \fill[#6, rounded corners=4pt] (0,2.2) rectangle (9.2, 2.5);
+    \node[anchor=north west, font=\ttfamily\footnotesize, text=#6] at (0.3, 2.05) {#3};
+    \node[anchor=north west, font=\bfseries\normalsize, text=ink] at (0.3, 1.55) {#4};
+    \node[anchor=north west, font=\footnotesize, text=muted, text width=8.6cm, align=left] at (0.3, 1.0) {#5};
+    % dual output badges
+    \fill[bg, rounded corners=2pt] (0.3, 0.25) rectangle (1.6, 0.6);
+    \node[anchor=center, font=\tiny\bfseries, text=cyan] at (0.95, 0.425) {PNG · α};
+    \fill[bg, rounded corners=2pt] (1.8, 0.25) rectangle (3.1, 0.6);
+    \node[anchor=center, font=\tiny\ttfamily, text=amber] at (2.45, 0.425) {MP4};
+  \end{scope}
+}
+
+% Row 1 (top): trace family
+\scenecard{1.2}{22.0}{algorithm-trace}{二分搜索追踪}{区间不变量如何在每次减半中保持？}{famTrace}
+\scenecard{10.8}{22.0}{gradient-descent}{梯度下降}{自适应步长如何在损失盆中收敛？}{famTrace}
+\scenecard{20.4}{22.0}{fourier-phasors}{傅里叶相量}{旋转谐波如何合成波形？}{famMath}
+\scenecard{30.0}{22.0}{geometric-proof}{几何证明}{为什么重排可导出勾股恒等式？}{famMath}
+
+% Row 2: network / architecture
+\scenecard{1.2}{19.0}{neural-forward-pass}{神经网络前向}{激活如何流经残差编码器？}{famNet}
+\scenecard{10.8}{19.0}{sorting-network}{排序网络}{哪些比较交换阶段可排序 8 个输入？}{famNet}
+\scenecard{20.4}{19.0}{protocol-state-machine}{协议状态机}{重试预算如何约束合法状态转移？}{famNet}
+\scenecard{30.0}{19.0}{matrix-transform}{矩阵变换}{矩阵如何变换基对齐多边形？}{famMath}
+
+% Row 3: process / systems
+\scenecard{1.2}{16.0}{bayesian-update}{贝叶斯更新}{先验与似然如何结合为后验？}{famMath}
+\scenecard{10.8}{16.0}{orbital-transfer}{轨道转移}{两次点火如何连接圆轨道？}{famProc}
+\scenecard{20.4}{16.0}{queueing-flow}{队列流}{到达、队列、工人与反压如何交互？}{famProc}
+\scenecard{30.0}{16.0}{l-system-growth}{L-系统生长}{递归分支如何产生有机结构？}{famProc}
+
+% ============================================================
+% SECTION 2 — 渲染管线
+% ============================================================
+\node[anchor=north west, font=\LARGE\bfseries, text=ink] at (1.2, 14.8) {02 · 渲染管线};
+\node[anchor=north west, font=\small, text=muted] at (1.2, 13.95)
+  {每个场景被 Manim 渲染两次：先取末帧透明 PNG，再生成低分辨率解释视频};
+
+% Pipeline flow diagram
+\begin{scope}[shift={(1.2, 8.0)}]
+  % width ~ 39.6, height ~ 5.5
+  \fill[panel, rounded corners=8pt] (0,0) rectangle (39.6, 5.4);
+
+  % Step 1: catalog + scenes.py
+  \fill[panel2, rounded corners=6pt] (0.4, 0.5) rectangle (6.4, 4.9);
+  \node[anchor=north, font=\bfseries, text=cyan] at (3.4, 4.5) {输入源};
+  \node[anchor=north, font=\scriptsize\ttfamily, text=ink] at (3.4, 4.0) {catalog.json};
+  \node[anchor=north, font=\scriptsize, text=muted, text width=5.6cm, align=center] at (3.4, 3.5)
+    {12 个场景元数据：用途 · 问题 · 家族 · 复杂度 · 标签};
+  \draw[line, dashed] (0.8, 2.8) -- (6.0, 2.8);
+  \node[anchor=north, font=\scriptsize\ttfamily, text=ink] at (3.4, 2.5) {scenes.py};
+  \node[anchor=north, font=\scriptsize, text=muted, text width=5.6cm, align=center] at (3.4, 2.0)
+    {12 个 Scene 子类 · 统一调色板 · title\_block 工具};
+  \draw[line, dashed] (0.8, 1.3) -- (6.0, 1.3);
+  \node[anchor=north, font=\scriptsize\ttfamily, text=ink] at (3.4, 1.0) {SCENES 映射};
+  \node[anchor=north, font=\tiny\ttfamily, text=muted] at (3.4, 0.65) {slug : class\_name};
+
+  % Arrow 1
+  \draw[-{Stealth[scale=1.2]}, line width=1.5pt, cyan] (6.4, 2.7) -- (8.4, 2.7);
+
+  % Step 2: render.py orchestrator
+  \fill[panel2, rounded corners=6pt] (8.4, 0.5) rectangle (14.4, 4.9);
+  \node[anchor=north, font=\bfseries, text=amber] at (11.4, 4.5) {render.py};
+  \node[anchor=north, font=\scriptsize, text=muted, text width=5.6cm, align=center] at (11.4, 4.0)
+    {脚本编排两次 Manim 调用};
+  \draw[line, dashed] (8.8, 3.3) -- (14.0, 3.3);
+  \node[anchor=north west, font=\tiny\ttfamily, text=ink] at (8.8, 3.0) {1. manim -ql -s -t};
+  \node[anchor=north west, font=\tiny, text=muted] at (8.8, 2.65) {末帧 · 透明背景};
+  \node[anchor=north west, font=\tiny\ttfamily, text=ink] at (8.8, 2.0) {2. manim -ql};
+  \node[anchor=north west, font=\tiny, text=muted] at (8.8, 1.65) {低清视频 · 完整动画};
+  \draw[line, dashed] (8.8, 1.2) -- (14.0, 1.2);
+  \node[anchor=north, font=\tiny, text=green] at (11.4, 0.85) {--disable\_caching};
+
+  % Arrow 2
+  \draw[-{Stealth[scale=1.2]}, line width=1.5pt, amber] (14.4, 2.7) -- (16.4, 2.7);
+
+  % Step 3: Manim engine
+  \fill[panel2, rounded corners=6pt] (16.4, 0.5) rectangle (22.4, 4.9);
+  \node[anchor=north, font=\bfseries, text=violet] at (19.4, 4.5) {Manim 0.20};
+  \node[anchor=north, font=\scriptsize, text=muted, text width=5.6cm, align=center] at (19.4, 4.0)
+    {数学动画引擎 · Cairo 渲染};
+  \draw[line, dashed] (16.8, 3.3) -- (22.0, 3.3);
+  \node[anchor=north, font=\scriptsize, text=ink] at (19.4, 2.9) {Cairo PNG};
+  \node[anchor=north, font=\tiny, text=muted] at (19.4, 2.5) {RGBA · 透明通道};
+  \draw[line, dashed] (16.8, 2.0) -- (22.0, 2.0);
+  \node[anchor=north, font=\scriptsize, text=ink] at (19.4, 1.6) {FFmpeg MP4};
+  \node[anchor=north, font=\tiny, text=muted] at (19.4, 1.2) {480p15 · 低质量预览};
+  \draw[line, dashed] (16.8, 0.8) -- (22.0, 0.8);
+  \node[anchor=north, font=\tiny, text=muted] at (19.4, 0.55) {media/ 临时目录};
+
+  % Arrow 3
+  \draw[-{Stealth[scale=1.2]}, line width=1.5pt, violet] (22.4, 2.7) -- (24.4, 2.7);
+
+  % Step 4: validation
+  \fill[panel2, rounded corners=6pt] (24.4, 0.5) rectangle (30.4, 4.9);
+  \node[anchor=north, font=\bfseries, text=green] at (27.4, 4.5) {质量校验};
+  \node[anchor=north, font=\scriptsize, text=muted, text width=5.6cm, align=center] at (27.4, 4.0)
+    {Pillow + ffprobe 断言};
+  \draw[line, dashed] (24.8, 3.3) -- (30.0, 3.3);
+  \node[anchor=north west, font=\tiny\ttfamily, text=cyan] at (24.8, 3.0) {validate\_png()};
+  \node[anchor=north west, font=\tiny, text=muted] at (24.8, 2.65) {透明率 ≥ 8\%};
+  \node[anchor=north west, font=\tiny, text=muted] at (24.8, 2.3) {可见像素 ≥ 2.5\%};
+  \node[anchor=north west, font=\tiny, text=muted] at (24.8, 1.95) {彩色像素 ≥ 1600};
+  \draw[line, dashed] (24.8, 1.5) -- (30.0, 1.5);
+  \node[anchor=north west, font=\tiny\ttfamily, text=amber] at (24.8, 1.2) {ffprobe duration};
+  \node[anchor=north west, font=\tiny, text=muted] at (24.8, 0.85) {提取视频时长};
+
+  % Arrow 4
+  \draw[-{Stealth[scale=1.2]}, line width=1.5pt, green] (30.4, 2.7) -- (32.4, 2.7);
+
+  % Step 5: output
+  \fill[panel2, rounded corners=6pt] (32.4, 0.5) rectangle (39.2, 4.9);
+  \node[anchor=north, font=\bfseries, text=rose] at (35.8, 4.5) {out/ 交付物};
+  \node[anchor=north, font=\scriptsize, text=muted, text width=6.4cm, align=center] at (35.8, 4.0)
+    {12× PNG + 12× MP4};
+  \draw[line, dashed] (32.8, 3.3) -- (38.8, 3.3);
+  \node[anchor=north west, font=\tiny\ttfamily, text=cyan] at (32.8, 3.0) {<slug>-transparent.png};
+  \node[anchor=north west, font=\tiny, text=muted] at (32.8, 2.65) {主交付 · 透明背景};
+  \node[anchor=north west, font=\tiny, text=muted] at (32.8, 2.3) {可嵌入文档 / 幻灯片};
+  \draw[line, dashed] (32.8, 1.8) -- (38.8, 1.8);
+  \node[anchor=north west, font=\tiny\ttfamily, text=amber] at (32.8, 1.5) {<slug>.mp4};
+  \node[anchor=north west, font=\tiny, text=muted] at (32.8, 1.15) {时间论证保留};
+  \node[anchor=north west, font=\tiny, text=muted] at (32.8, 0.8) {README 内嵌预览};
+\end{scope}
+
+% ============================================================
+% SECTION 3 — 双输出设计 + 测试契约
+% ============================================================
+\node[anchor=north west, font=\LARGE\bfseries, text=ink] at (1.2, 7.5) {03 · 设计哲学与测试契约};
+
+% Left: dual-output concept
+\fill[panel, rounded corners=8pt] (1.2, 1.2) rectangle (20.0, 7.0);
+\node[anchor=north west, font=\bfseries\large, text=cyan] at (1.8, 6.5) {双输出设计};
+\node[anchor=north west, font=\small, text=muted, text width=17.5cm, align=left] at (1.8, 5.9)
+  {透明 PNG 是主交付物——它可以直接嵌入文档、幻灯片、网页，无需担心背景冲突。};
+\node[anchor=north west, font=\small, text=muted, text width=17.5cm, align=left] at (1.8, 5.2)
+  {MP4 是时间论证的载体——保留"如何从 A 到 B"的叙事过程，弥补静态图像无法传达的因果链。};
+
+% visual: PNG icon + arrow + MP4 icon
+\begin{scope}[shift={(2.5, 1.8)}]
+  % PNG card
+  \fill[panel2, rounded corners=4pt] (0,0) rectangle (4.5, 2.8);
+  \node[anchor=north, font=\bfseries, text=cyan] at (2.25, 2.5) {PNG (主)};
+  % fake checkerboard transparency demo
+  \foreach \i in {0,...,3} \foreach \j in {0,...,2} {
+    \pgfmathsetmacro{\xx}{0.3 + \i*0.35}
+    \pgfmathsetmacro{\yy}{0.3 + \j*0.35}
+    \pgfmathparse{mod(\i+\j,2)==0 ? "panel2" : "bg"}
+    \edef\cc{\pgfmathresult}
+    \fill[\cc] (\xx, \yy) rectangle (\xx+0.3, \yy+0.3);
+  }
+  % overlay shape
+  \fill[cyan, opacity=0.7] (1.0, 0.6) .. controls (1.5, 2.0) and (2.5, 2.0) .. (3.2, 0.8) -- cycle;
+  \node[anchor=south, font=\tiny\ttfamily, text=muted] at (2.25, 0.2) {RGBA · 透明};
+
+  % arrow
+  \draw[-{Stealth[scale=0.8]}, line width=1pt, muted] (4.9, 1.4) -- (6.5, 1.4);
+  \node[anchor=south, font=\tiny, text=muted] at (5.7, 1.4) {时间维度};
+
+  % MP4 card
+  \fill[panel2, rounded corners=4pt] (6.9, 0) rectangle (14.4, 2.8);
+  \node[anchor=north, font=\bfseries, text=amber] at (10.65, 2.5) {MP4 (辅)};
+  % film strip
+  \foreach \i in {0,...,5} {
+    \fill[amber, opacity=0.4] (7.2 + \i*1.15, 1.2) rectangle (7.9 + \i*1.15, 2.0);
+  }
+  \fill[amber] (10.1, 0.5) -- (10.1, 1.0) -- (10.9, 0.75) -- cycle;
+  \node[anchor=south, font=\tiny\ttfamily, text=muted] at (10.65, 0.2) {480p15 · 动画};
+\end{scope}
+
+% Right: test contract + tech stack
+\fill[panel, rounded corners=8pt] (20.8, 1.2) rectangle (40.8, 7.0);
+\node[anchor=north west, font=\bfseries\large, text=rose] at (21.4, 6.5) {测试契约};
+\node[anchor=north west, font=\small, text=muted, text width=18.0cm, align=left] at (21.4, 5.9)
+  {pytest 断言每个场景都有 PNG 和 MP4 输出，且 MP4 大于 10KB——防止渲染静默失败。};
+
+\node[anchor=north west, font=\ttfamily\footnotesize, text=green] at (21.4, 5.0)
+  {test\_every\_scene\_has\_primary\_and\_motion\_artifacts()};
+\node[anchor=north west, font=\small, text=muted, text width=18.0cm, align=left] at (21.4, 4.4)
+  {· SCENES ≥ 12 个};
+\node[anchor=north west, font=\small, text=muted, text width=18.0cm, align=left] at (21.4, 3.9)
+  {· 每个 slug 对应 -transparent.png 存在};
+\node[anchor=north west, font=\small, text=muted, text width=18.0cm, align=left] at (21.4, 3.4)
+  {· 每个 slug 对应 .mp4 大小 > 10,000 字节};
+
+\draw[line, dashed] (21.4, 2.9) -- (40.2, 2.9);
+
+\node[anchor=north west, font=\bfseries\large, text=indigo] at (21.4, 2.5) {技术栈};
+\node[anchor=north west, font=\small, text=ink] at (21.4, 1.9)
+  {Python 3.13 · Manim 0.20.1 · Pillow 11+ · uv · pytest · ruff};
+\node[anchor=north west, font=\small, text=muted] at (21.4, 1.4)
+  {外部依赖：ffprobe / ffmpeg（视频编码与探测）};
+
+% ============================================================
+% FOOTER
+% ============================================================
+\draw[line width=0.8pt, line] (1.2, 0.7) -- (40.8, 0.7);
+\node[anchor=south west, font=\tiny\ttfamily, text=muted] at (1.2, 0.3)
+  {manim-demos / architecture-infographic / 2026};
+\node[anchor=south east, font=\tiny\ttfamily, text=muted] at (40.8, 0.3)
+  {12 scenes · 2 outputs each · 1 render script · 1 contract test};
+
+\end{tikzpicture}
+\end{document}
