@@ -1,7 +1,5 @@
 % manim-demos architecture infographic
-% Build: xelatex -interaction=nonstopmode architecture-infographic.tex
-%        dvisvgm --pdf architecture-infographic.pdf
-%        pdftoppm -png -r 150 architecture-infographic.pdf architecture-infographic
+% Render: python3 ~/.agents/skills/create-infographic/scripts/render_tikz.py docs/architecture-infographic.tex --workdir . --out-dir docs --engine xelatex --dpi 300 --svg --strict-warnings --strict-geometry --strict-composition --strict-svg --min-labelled-connectors 0.6 --expect-text "manim-demos"
 
 \documentclass[tikz,border=0pt,12pt]{standalone}
 \usepackage{xeCJK}
