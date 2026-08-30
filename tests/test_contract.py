@@ -199,3 +199,119 @@ def test_run_propagates_a_nonzero_exit(capsys) -> None:
         render.run(command)
     assert excinfo.value.returncode == 3
     assert capsys.readouterr().out == "+ " + " ".join(command) + "\n"
+
+
+def test_main_requires_ffprobe_before_any_rendering(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(render.shutil, "which", lambda name: None)
+    monkeypatch.setattr(render, "OUT", tmp_path / "out")
+    commands: list[list[str]] = []
+    monkeypatch.setattr(render, "run", lambda command: commands.append(command))
+    with pytest.raises(SystemExit) as excinfo:
+        render.main()
+    assert str(excinfo.value) == "ffprobe is required"
+    assert commands == []  # the guard fires before a single manim invocation
+    assert not (tmp_path / "out").exists()  # ...and before the output tree is created
+
+
+def test_main_renders_every_scene_and_prints_the_report(monkeypatch, tmp_path, capsys) -> None:
+    out = tmp_path / "out"
+    media = tmp_path / "media"
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    events: list[tuple] = []
+
+    def fake_run(command: list[str]) -> None:
+        events.append(("run", command))
+
+    def fake_newest(pattern: str) -> Path:
+        events.append(("newest", pattern))
+        return media / pattern.replace("*", "-found")
+
+    def fake_copy2(source: Path, target: Path) -> None:
+        events.append(("copy", source, target))
+
+    def fake_check_output(command: list[str], text: bool) -> str:
+        assert text is True
+        events.append(("probe", command))
+        return "3.249\n"  # rounds to 3.25 via round(float(probe), 2)
+
+    def fake_validate_png(path: Path) -> dict[str, object]:
+        events.append(("validate", path))
+        return {"size": (854, 480), "transparent_pct": 8.4, "visible_pct": 91.2, "colorful": 23456}
+
+    monkeypatch.setattr(render, "run", fake_run)
+    monkeypatch.setattr(render, "newest", fake_newest)
+    monkeypatch.setattr(render, "validate_png", fake_validate_png)
+    monkeypatch.setattr(render.shutil, "copy2", fake_copy2)
+    monkeypatch.setattr(render.subprocess, "check_output", fake_check_output)
+
+    render.main()
+
+    assert out.is_dir()  # OUT.mkdir(exist_ok=True) created the fresh output tree
+    report = []
+    expected_events = []
+    for slug, class_name in SCENES.items():
+        png = out / f"{slug}-transparent.png"
+        video = out / f"{slug}.mp4"
+        still = [
+            "manim",
+            "-ql",
+            "-s",
+            "-t",
+            "--disable_caching",
+            "--progress_bar",
+            "none",
+            "--media_dir",
+            str(render.MEDIA),
+            "--output_file",
+            slug,
+            str(render.SOURCE),
+            class_name,
+        ]
+        movie = [
+            "manim",
+            "-ql",
+            "--disable_caching",
+            "--progress_bar",
+            "none",
+            "--media_dir",
+            str(render.MEDIA),
+            "--output_file",
+            slug,
+            str(render.SOURCE),
+            class_name,
+        ]
+        probe = [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=nw=1:nk=1",
+            str(video),
+        ]
+        expected_events += [
+            ("run", still),
+            ("newest", f"{slug}*.png"),
+            ("copy", media / f"{slug}-found.png", png),
+            ("run", movie),
+            ("newest", f"{slug}.mp4"),
+            ("copy", media / f"{slug}.mp4", video),
+            ("probe", probe),
+            ("validate", png),
+        ]
+        report.append(
+            {
+                "scene": slug,
+                "size": (854, 480),
+                "transparent_pct": 8.4,
+                "visible_pct": 91.2,
+                "colorful": 23456,
+                "video_seconds": 3.25,
+            }
+        )
+    assert events == expected_events  # exact commands, copies, probes, and per-scene ordering
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[: len(SCENES)] == [json.dumps(item) for item in report]
+    assert "\n".join(lines[len(SCENES) :]) == json.dumps(report, indent=2)
