@@ -14,7 +14,7 @@ Twelve explanatory reference scenes where the transparent PNG is the primary del
 
 ```bash
 uv sync
-uv run python scripts/render.py
+uv run python tools/render.py
 uv run ruff check .
 uv run pytest
 ```

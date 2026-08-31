@@ -6,7 +6,7 @@ default: build
 # and media/; outputs are validated for transparency and content.
 build:
     uv sync
-    uv run python scripts/render.py
+    uv run python tools/render.py
 
 # Render, then lint and run the test suite.
 test: build

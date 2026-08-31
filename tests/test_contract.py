@@ -16,13 +16,13 @@ from manim_demos import SCENES, scenes
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 MP4_FTYP = b"ftyp"
-# Acceptance floors mirrored from scripts/render.py validate_png().
+# Acceptance floors mirrored from tools/render.py validate_png().
 PNG_TRANSPARENT_FRACTION = 0.08
 PNG_VISIBLE_FRACTION = 0.025
 PNG_COLORFUL_MIN = 1600
 CATALOG_FIELDS = {"id", "use", "question", "family", "complexity", "tags"}
 
-# scripts/render.py lives outside the package; load it by path to test its helpers directly.
+# tools/render.py lives outside the package; load it by path to test its helpers directly.
 RENDER_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "render.py"
 
 
