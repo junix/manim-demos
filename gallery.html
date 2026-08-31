@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>manim-demos — gallery</title>
+<style>
+:root{
+  --bg:#fbfaf8; --panel:#fff; --ink:#16181d; --muted:#5f6570; --faint:#8b929e;
+  --line:#e3e1dc; --accent:#2f6f5e; --chip:#eef1ef; --code:#f6f5f2;
+  --shadow:0 1px 2px rgba(20,22,26,.05),0 8px 24px -12px rgba(20,22,26,.18);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#0f1114; --panel:#161a1f; --ink:#e8eaee; --muted:#a2abb8; --faint:#727d8c;
+  --line:#262c34; --accent:#6fd3b0; --chip:#1d232a; --code:#12161a;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7);
+}}
+:root[data-theme=dark]{
+  --bg:#0f1114; --panel:#161a1f; --ink:#e8eaee; --muted:#a2abb8; --faint:#727d8c;
+  --line:#262c34; --accent:#6fd3b0; --chip:#1d232a; --code:#12161a;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Inter,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding:56px 28px 96px}
+header{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:40px}
+h1{margin:0;font-size:30px;letter-spacing:-.02em;font-weight:650}
+.tagline{margin:10px 0 0;color:var(--muted);max-width:70ch;font-size:16px}
+.meta{margin-top:20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.pill{font:12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);
+  background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:6px 11px}
+.pill b{color:var(--ink);font-weight:600}
+.grid{display:grid;gap:26px;grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.shot{margin:0;padding:16px;display:flex;flex-direction:column;gap:10px;
+  align-items:center;justify-content:center;height:250px;border-bottom:1px solid var(--line)}
+.shot.tall{height:400px}
+.shot.checker{background-color:#f2f1ee;background-image:
+  linear-gradient(45deg,#e2e0dc 25%,transparent 25%,transparent 75%,#e2e0dc 75%),
+  linear-gradient(45deg,#e2e0dc 25%,transparent 25%,transparent 75%,#e2e0dc 75%);
+  background-size:16px 16px;background-position:0 0,8px 8px}
+.shot.dark{background:#11151a}
+.shot.light{background:#fff}
+.shot img,.shot video{max-width:100%;max-height:100%;width:auto;height:auto;
+  object-fit:contain;display:block;border-radius:3px}
+.shot.multi img{max-height:calc(50% - 5px)}
+.shot.multi{display:grid;grid-template-columns:1fr 1fr;place-items:center;gap:8px}
+.shot.multi img{max-height:100%;max-width:100%}
+.shot .missing{color:var(--faint);font-size:13px;font-style:italic;text-align:center}
+.body{padding:18px 20px 20px;display:flex;flex-direction:column;gap:10px;flex:1}
+.idx{font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--faint);
+  letter-spacing:.09em;text-transform:uppercase}
+h2{margin:0;font-size:17px;font-weight:620;letter-spacing:-.01em}
+.blurb{margin:0;color:var(--muted);font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.tag{font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);
+  background:var(--chip);border-radius:5px;padding:4px 7px}
+details{margin-top:auto;border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font:12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--accent);list-style:none;user-select:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";display:inline-block;transition:transform .15s}
+details[open] summary::before{content:"▾ "}
+pre{margin:12px 0 0;background:var(--code);border:1px solid var(--line);border-radius:8px;
+  padding:14px;overflow-x:auto;font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;
+  max-height:440px;overflow-y:auto}
+pre .c{color:var(--faint);font-style:italic}
+pre .s{color:var(--accent)}
+pre .n{color:#b1784f}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) pre .n{color:#d8a06a}}
+:root[data-theme=dark] pre .n{color:#d8a06a}
+.extra{font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--faint)}
+footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);
+  color:var(--faint);font-size:13px}
+footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
+  font:12px/1 ui-monospace,SFMono-Regular,Menlo,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>manim-demos</h1>
+    <p class="tagline">Twelve animated explainers, each a complete scene rather than a single transform — every card plays the rendered MP4 over its final frame.</p>
+    <div class="meta"><span class="pill">Manim Community</span><span class="pill"><b>12</b> demos</span><span class="pill"><b>12</b> rendered</span></div>
+  </header>
+  <main class="grid">
+      <article class="card">
+        <figure class="shot dark"><video src="out/algorithm-trace.mp4" poster="out/algorithm-trace-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">01 · trace</div>
+          <h2>Algorithm trace</h2>
+          <p class="blurb">How does binary search preserve its interval invariant?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">algorithm</span><span class="tag">search</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class AlgorithmTrace(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;BINARY SEARCH / TRACE 06&quot;</span>, <span class="s">&quot;INTERVAL HALVING AS A VISUAL INVARIANT&quot;</span>)
+        values = [<span class="n">3</span>, <span class="n">8</span>, <span class="n">12</span>, <span class="n">19</span>, <span class="n">24</span>, <span class="n">31</span>, <span class="n">42</span>, <span class="n">47</span>, <span class="n">58</span>, <span class="n">63</span>, <span class="n">71</span>, <span class="n">86</span>, <span class="n">91</span>]
+        cards = VGroup()
+        for index, value in enumerate(values):
+            box = RoundedRectangle(
+                width=<span class="n">0.78</span>,
+                height=<span class="n">0.72</span>,
+                corner_radius=<span class="n">0.1</span>,
+                stroke_color=<span class="s">&quot;#6689a0&quot;</span>,
+                stroke_width=<span class="n">1.5</span>,
+                fill_color=<span class="s">&quot;#132740&quot;</span>,
+                fill_opacity=<span class="n">0.78</span>,
+            )
+            number = Text(str(value), font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">22</span>, color=INK)
+            card = VGroup(box, number)
+            card.move_to(LEFT * <span class="n">5.2</span> + RIGHT * index * <span class="n">0.86</span> + UP * <span class="n">0.35</span>)
+            cards.add(card)
+        target = VGroup(
+            Circle(radius=<span class="n">0.37</span>, color=ROSE, stroke_width=<span class="n">3.2</span>),
+            Text(<span class="s">&quot;42&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">20</span>, color=ROSE),
+        ).arrange()
+        target_label = Text(<span class="s">&quot;TARGET&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">13</span>, color=MUTED).next_to(
+            target, UP, buff=<span class="n">0.15</span>
+        )
+        target_group = VGroup(target_label, target).move_to(RIGHT * <span class="n">4.7</span> + UP * <span class="n">2.05</span>)
+        tracks = VGroup()
+        intervals = [(<span class="n">0</span>, <span class="n">12</span>, <span class="n">6</span>, <span class="s">&quot;mid = 6&quot;</span>), (<span class="n">0</span>, <span class="n">5</span>, <span class="n">2</span>, <span class="s">&quot;mid = 2&quot;</span>), (<span class="n">3</span>, <span class="n">5</span>, <span class="n">4</span>, <span class="s">&quot;mid = 4&quot;</span>), (<span class="n">5</span>, <span class="n">5</span>, <span class="n">5</span>, <span class="s">&quot;found&quot;</span>)]
+        for row, (lo, hi, mid, note) in enumerate(intervals):
+            y = -<span class="n">0.75</span> - row * <span class="n">0.85</span>
+            start = cards[lo].get_center()[<span class="n">0</span>]
+            end = cards[hi].get_center()[<span class="n">0</span>]
+            line = Line(
+                [start, y, <span class="n">0</span>],
+                [end, y, <span class="n">0</span>],
+                color=[CYAN, INDIGO, AMBER, ROSE][row],
+                stroke_width=<span class="n">6</span> - row * <span class="n">0.65</span>,
+            )
+            left_tick = Line([start, y - <span class="n">0.13</span>, <span class="n">0</span>], [start, y + <span class="n">0.13</span>, <span class="n">0</span>], color=line.get_color())
+            right_tick = Line([end, y - <span class="n">0.13</span>, <span class="n">0</span>], [end, y + <span class="n">0.13</span>, <span class="n">0</span>], color=line.get_color())
+            dot = Dot([cards[mid].get_center()[<span class="n">0</span>], y, <span class="n">0</span>], radius=<span class="n">0.09</span>, color=AMBER if row &lt; <span class="n">3</span> else ROSE)
+            note_text = Text(note, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">15</span>, color=INK).next_to(
+                right_tick, RIGHT, buff=<span class="n">0.18</span>
+            )
+            tracks.add(VGroup(line, left_tick, right_tick, dot, note_text))
+        caption = Text(
+            <span class="s">&quot;Each comparison preserves:  target ∈ [low, high]&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">18</span>, color=CYAN
+        ).to_edge(DOWN, buff=<span class="n">0.42</span>)
+        self.play(
+            FadeIn(header),
+            LaggedStart(*(FadeIn(card, shift=UP * <span class="n">0.12</span>) for card in cards), lag_ratio=<span class="n">0.045</span>),
+            run_time=<span class="n">1.2</span>,
+        )
+        self.play(FadeIn(target_group, shift=LEFT * <span class="n">0.2</span>))
+        self.play(LaggedStart(*(Create(track) for track in tracks), lag_ratio=<span class="n">0.22</span>), run_time=<span class="n">2.0</span>)
+        cards[<span class="n">6</span>][<span class="n">0</span>].set_stroke(ROSE, width=<span class="n">3</span>).set_fill(<span class="s">&quot;#4b263e&quot;</span>, opacity=<span class="n">0.92</span>)
+        self.play(FadeIn(caption))
+        self.wait(<span class="n">0.5</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/fourier-phasors.mp4" poster="out/fourier-phasors-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">02 · temporal math</div>
+          <h2>Fourier phasors</h2>
+          <p class="blurb">How do rotating harmonics synthesize a waveform?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">fourier</span><span class="tag">phasors</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class FourierPhasors(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;FOURIER PHASORS&quot;</span>, <span class="s">&quot;ROTATING VECTORS SYNTHESIZE A WAVE&quot;</span>)
+        center = LEFT * <span class="n">3.5</span> + DOWN * <span class="n">0.15</span>
+        radii = [<span class="n">1.55</span>, <span class="n">0.72</span>, <span class="n">0.43</span>, <span class="n">0.3</span>]
+        frequencies = [<span class="n">1</span>, <span class="n">3</span>, <span class="n">5</span>, <span class="n">7</span>]
+        colors = [CYAN, INDIGO, ROSE, AMBER]
+        chains = VGroup()
+        point = center.copy()
+        time = <span class="n">0.73</span>
+        for radius, frequency, color in zip(radii, frequencies, colors, strict=True):
+            circle = Circle(radius=radius, color=color, stroke_width=<span class="n">1.7</span>, stroke_opacity=<span class="n">0.55</span>).move_to(point)
+            angle = frequency * time
+            end = point + radius * np.array([np.cos(angle), np.sin(angle), <span class="n">0</span>])
+            arrow = Arrow(
+                point, end, buff=<span class="n">0</span>, color=color, stroke_width=<span class="n">4</span>, max_tip_length_to_length_ratio=<span class="n">0.12</span>
+            )
+            chains.add(circle, arrow, Dot(end, radius=<span class="n">0.055</span>, color=color))
+            point = end
+        axes = Axes(
+            x_range=[<span class="n">0</span>, <span class="n">6</span>, <span class="n">1</span>],
+            y_range=[-<span class="n">2.3</span>, <span class="n">2.3</span>, <span class="n">1</span>],
+            x_length=<span class="n">5.5</span>,
+            y_length=<span class="n">4.4</span>,
+            axis_config={<span class="s">&quot;color&quot;</span>: <span class="s">&quot;#57768d&quot;</span>, <span class="s">&quot;stroke_opacity&quot;</span>: <span class="n">0.7</span>, <span class="s">&quot;include_ticks&quot;</span>: False},
+        ).move_to(RIGHT * <span class="n">3.35</span> + DOWN * <span class="n">0.15</span>)
+        wave = axes.plot(
+            lambda x: (
+                <span class="n">1.55</span> * np.sin(x + time)
+                + <span class="n">0.72</span> * np.sin(<span class="n">3</span> * (x + time))
+                + <span class="n">0.43</span> * np.sin(<span class="n">5</span> * (x + time))
+                + <span class="n">0.3</span> * np.sin(<span class="n">7</span> * (x + time))
+            ),
+            x_range=[<span class="n">0</span>, <span class="n">6</span>, <span class="n">0.025</span>],
+            color=ROSE,
+            stroke_width=<span class="n">3</span>,
+        )
+        bridge = Line(
+            point,
+            axes.c2p(
+                <span class="n">0</span>,
+                <span class="n">1.55</span> * np.sin(time)
+                + <span class="n">0.72</span> * np.sin(<span class="n">3</span> * time)
+                + <span class="n">0.43</span> * np.sin(<span class="n">5</span> * time)
+                + <span class="n">0.3</span> * np.sin(<span class="n">7</span> * time),
+            ),
+            color=<span class="s">&quot;#b9cfdd&quot;</span>,
+            stroke_width=<span class="n">1.2</span>,
+            stroke_opacity=<span class="n">0.6</span>,
+        )
+        legend = (
+            VGroup(
+                *[
+                    VGroup(
+                        Dot(color=c), Text(f<span class="s">&quot;n = {f}&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">15</span>, color=INK)
+                    ).arrange(RIGHT, buff=<span class="n">0.13</span>)
+                    for f, c in zip(frequencies, colors, strict=True)
+                ]
+            )
+            .arrange(RIGHT, buff=<span class="n">0.48</span>)
+            .to_edge(DOWN, buff=<span class="n">0.42</span>)
+        )
+        self.play(
+            FadeIn(header), LaggedStart(*(Create(item) for item in chains), lag_ratio=<span class="n">0.08</span>), run_time=<span class="n">1.5</span>
+        )
+        self.play(Create(axes), Create(bridge), Create(wave), run_time=<span class="n">1.6</span>)
+        self.play(FadeIn(legend))
+        self.wait(<span class="n">0.5</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/geometric-proof.mp4" poster="out/geometric-proof-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">03 · proof</div>
+          <h2>Geometric proof</h2>
+          <p class="blurb">Why does the Pythagorean identity follow by rearrangement?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">geometry</span><span class="tag">proof</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class GeometricProof(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;PYTHAGORAS / REARRANGEMENT&quot;</span>, <span class="s">&quot;THE SAME FOUR TRIANGLES, TWO INTERIORS&quot;</span>)
+        colors = [CYAN, INDIGO, ROSE, AMBER]
+        panels = VGroup()
+        for panel_x, mode in ((-<span class="n">3.45</span>, <span class="s">&quot;c²&quot;</span>), (<span class="n">3.45</span>, <span class="s">&quot;a² + b²&quot;</span>)):
+            frame = Square(
+                side_length=<span class="n">4.35</span>, color=<span class="s">&quot;#6c8aa0&quot;</span>, stroke_width=<span class="n">1.8</span>, fill_color=<span class="s">&quot;#11263d&quot;</span>, fill_opacity=<span class="n">0.42</span>
+            ).move_to([panel_x, -<span class="n">0.35</span>, <span class="n">0</span>])
+            tris = VGroup()
+            base = np.array([[-<span class="n">2.05</span>, -<span class="n">2.05</span>, <span class="n">0</span>], [<span class="n">0.55</span>, -<span class="n">2.05</span>, <span class="n">0</span>], [-<span class="n">2.05</span>, -<span class="n">0.45</span>, <span class="n">0</span>]])
+            for i in range(<span class="n">4</span>):
+                tri = Polygon(*base, color=colors[i], stroke_width=<span class="n">2</span>, fill_color=colors[i], fill_opacity=<span class="n">0.27</span>)
+                tri.rotate(i * PI / <span class="n">2</span>, about_point=ORIGIN).shift([panel_x, -<span class="n">0.35</span>, <span class="n">0</span>])
+                tris.add(tri)
+            if mode == <span class="s">&quot;c²&quot;</span>:
+                inner = (
+                    Square(
+                        side_length=<span class="n">1.72</span>,
+                        color=VIOLET,
+                        stroke_width=<span class="n">2.6</span>,
+                        fill_color=<span class="s">&quot;#4a2c64&quot;</span>,
+                        fill_opacity=<span class="n">0.42</span>,
+                    )
+                    .rotate(<span class="n">0.56</span>)
+                    .move_to([panel_x, -<span class="n">0.35</span>, <span class="n">0</span>])
+                )
+                label = Text(<span class="s">&quot;c²&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, weight=<span class="s">&quot;BOLD&quot;</span>, font_size=<span class="n">31</span>, color=VIOLET).move_to(
+                    inner
+                )
+            else:
+                inner_a = Rectangle(
+                    width=<span class="n">1.55</span>,
+                    height=<span class="n">1.55</span>,
+                    color=CYAN,
+                    stroke_width=<span class="n">2.5</span>,
+                    fill_color=<span class="s">&quot;#19413e&quot;</span>,
+                    fill_opacity=<span class="n">0.55</span>,
+                ).move_to([panel_x - <span class="n">0.82</span>, -<span class="n">0.35</span>, <span class="n">0</span>])
+                inner_b = Rectangle(
+                    width=<span class="n">1.08</span>,
+                    height=<span class="n">1.08</span>,
+                    color=AMBER,
+                    stroke_width=<span class="n">2.5</span>,
+                    fill_color=<span class="s">&quot;#493d1d&quot;</span>,
+                    fill_opacity=<span class="n">0.55</span>,
+                ).move_to([panel_x + <span class="n">0.75</span>, -<span class="n">0.35</span>, <span class="n">0</span>])
+                inner = VGroup(inner_a, inner_b)
+                label = VGroup(
+                    Text(<span class="s">&quot;a²&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">26</span>, color=CYAN).move_to(inner_a),
+                    Text(<span class="s">&quot;b²&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">24</span>, color=AMBER).move_to(inner_b),
+                )
+            panels.add(VGroup(frame, tris, inner, label))
+        equality = Text(
+            <span class="s">&quot;SAME OUTER AREA  −  SAME TRIANGLES&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">17</span>, color=MUTED
+        ).to_edge(DOWN, buff=<span class="n">0.58</span>)
+        therefore = Text(
+            <span class="s">&quot;c²  =  a² + b²&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, weight=<span class="s">&quot;BOLD&quot;</span>, font_size=<span class="n">28</span>, color=INK
+        ).next_to(equality, UP, buff=<span class="n">0.18</span>)
+        self.play(FadeIn(header), Create(panels[<span class="n">0</span>][<span class="n">0</span>]), Create(panels[<span class="n">1</span>][<span class="n">0</span>]))
+        self.play(
+            LaggedStart(*(FadeIn(panel[<span class="n">1</span>], shift=UP * <span class="n">0.1</span>) for panel in panels), lag_ratio=<span class="n">0.25</span>), run_time=<span class="n">1.5</span>
+        )
+        self.play(FadeIn(panels[<span class="n">0</span>][<span class="n">2</span>:]), FadeIn(panels[<span class="n">1</span>][<span class="n">2</span>:]))
+        self.play(FadeIn(therefore), FadeIn(equality))
+        self.wait(<span class="n">0.5</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/gradient-descent.mp4" poster="out/gradient-descent-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">04 · optimization trace</div>
+          <h2>Gradient descent</h2>
+          <p class="blurb">How do adaptive steps converge in a loss basin?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">optimization</span><span class="tag">gradient</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class GradientDescent(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;GRADIENT DESCENT&quot;</span>, <span class="s">&quot;LOSS LANDSCAPE / STEP SIZE / CONVERGENCE TRACE&quot;</span>)
+        axes = Axes(
+            x_range=[-<span class="n">4</span>, <span class="n">4</span>, <span class="n">1</span>],
+            y_range=[<span class="n">0</span>, <span class="n">8</span>, <span class="n">2</span>],
+            x_length=<span class="n">9.2</span>,
+            y_length=<span class="n">4.8</span>,
+            axis_config={<span class="s">&quot;color&quot;</span>: <span class="s">&quot;#57768d&quot;</span>, <span class="s">&quot;include_ticks&quot;</span>: False},
+        ).shift(DOWN * <span class="n">0.45</span>)
+        curve = axes.plot(
+            lambda x: <span class="n">0.28</span> * (x - <span class="n">0.65</span>) ** <span class="n">2</span> + <span class="n">0.22</span> * np.sin(<span class="n">3</span> * x) + <span class="n">0.6</span>,
+            x_range=[-<span class="n">4</span>, <span class="n">4</span>, <span class="n">0.035</span>],
+            color=INDIGO,
+            stroke_width=<span class="n">3</span>,
+        )
+        xs = [-<span class="n">3.4</span>, -<span class="n">2.25</span>, -<span class="n">1.25</span>, -<span class="n">0.35</span>, <span class="n">0.25</span>, <span class="n">0.58</span>, <span class="n">0.66</span>]
+        points = [axes.c2p(x, <span class="n">0.28</span> * (x - <span class="n">0.65</span>) ** <span class="n">2</span> + <span class="n">0.22</span> * np.sin(<span class="n">3</span> * x) + <span class="n">0.6</span>) for x in xs]
+        trace = VGroup(
+            *[
+                Arrow(
+                    points[i],
+                    points[i + <span class="n">1</span>],
+                    buff=<span class="n">0.09</span>,
+                    color=[CYAN, INDIGO, VIOLET, ROSE, AMBER, CYAN][i],
+                    stroke_width=<span class="n">3</span>,
+                    max_tip_length_to_length_ratio=<span class="n">0.18</span>,
+                )
+                for i in range(len(points) - <span class="n">1</span>)
+            ]
+        )
+        dots = VGroup(
+            *[
+                Dot(point, radius=<span class="n">0.085</span>, color=AMBER if i &lt; len(points) - <span class="n">1</span> else ROSE)
+                for i, point in enumerate(points)
+            ]
+        )
+        notes = VGroup(
+            *[
+                Text(f<span class="s">&quot;η{i + 1}&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">13</span>, color=MUTED).next_to(dot, UP, buff=<span class="n">0.08</span>)
+                for i, dot in enumerate(dots)
+            ]
+        )
+        caption = Text(
+            <span class="s">&quot;adaptive steps settle inside the low-curvature basin&quot;</span>,
+            font=<span class="s">&quot;Avenir Next&quot;</span>,
+            font_size=<span class="n">17</span>,
+            color=CYAN,
+        ).to_edge(DOWN, buff=<span class="n">0.38</span>)
+        self.play(FadeIn(header), Create(axes), Create(curve), run_time=<span class="n">1.1</span>)
+        self.play(
+            LaggedStart(*(Create(arrow) for arrow in trace), lag_ratio=<span class="n">0.13</span>),
+            LaggedStart(*(FadeIn(dot) for dot in dots), lag_ratio=<span class="n">0.11</span>),
+            run_time=<span class="n">1.5</span>,
+        )
+        self.play(FadeIn(notes), FadeIn(caption))
+        self.wait(<span class="n">0.35</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/neural-forward-pass.mp4" poster="out/neural-forward-pass-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">05 · network animation</div>
+          <h2>Neural forward pass</h2>
+          <p class="blurb">How do activations move through a residual encoder?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">neural-network</span><span class="tag">flow</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class NeuralForwardPass(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;NEURAL FORWARD PASS&quot;</span>, <span class="s">&quot;FEATURE FLOW / BOTTLENECK / CLASS ACTIVATION&quot;</span>)
+        sizes = [<span class="n">6</span>, <span class="n">8</span>, <span class="n">5</span>, <span class="n">7</span>, <span class="n">3</span>]
+        xs = np.linspace(-<span class="n">5.0</span>, <span class="n">5.0</span>, len(sizes))
+        layers = VGroup()
+        connections = VGroup()
+        previous: list[Dot] = []
+        for layer_index, (x, size) in enumerate(zip(xs, sizes, strict=True)):
+            nodes = [
+                Dot(
+                    [x, (i - (size - <span class="n">1</span>) / <span class="n">2</span>) * <span class="n">0.58</span> - <span class="n">0.25</span>, <span class="n">0</span>],
+                    radius=<span class="n">0.09</span>,
+                    color=[CYAN, INDIGO, VIOLET, ROSE, AMBER][layer_index],
+                )
+                for i in range(size)
+            ]
+            if previous:
+                for left in previous:
+                    for right in nodes:
+                        if int((left.get_y() + right.get_y()) * <span class="n">10</span> + layer_index) % <span class="n">3</span> == <span class="n">0</span>:
+                            connections.add(
+                                Line(
+                                    left.get_center(),
+                                    right.get_center(),
+                                    color=<span class="s">&quot;#66869b&quot;</span>,
+                                    stroke_width=<span class="n">0.7</span>,
+                                    stroke_opacity=<span class="n">0.26</span>,
+                                )
+                            )
+            layer = VGroup(*nodes)
+            label = Text(
+                [<span class="s">&quot;INPUT&quot;</span>, <span class="s">&quot;STEM&quot;</span>, <span class="s">&quot;LATENT&quot;</span>, <span class="s">&quot;ATTENTION&quot;</span>, <span class="s">&quot;CLASS&quot;</span>][layer_index],
+                font=<span class="s">&quot;Avenir Next&quot;</span>,
+                font_size=<span class="n">13</span>,
+                color=MUTED,
+            ).next_to(layer, DOWN, buff=<span class="n">0.22</span>)
+            layers.add(VGroup(layer, label))
+            previous = nodes
+        skip = Arrow(
+            layers[<span class="n">1</span>].get_top() + UP * <span class="n">0.1</span>,
+            layers[<span class="n">3</span>].get_top() + UP * <span class="n">0.1</span>,
+            path_arc=-<span class="n">0.45</span>,
+            color=ROSE,
+            buff=<span class="n">0.12</span>,
+            stroke_width=<span class="n">2.4</span>,
+        )
+        self.play(FadeIn(header), Create(connections), run_time=<span class="n">1.0</span>)
+        self.play(
+            LaggedStart(*(FadeIn(layer, shift=RIGHT * <span class="n">0.15</span>) for layer in layers), lag_ratio=<span class="n">0.14</span>),
+            run_time=<span class="n">1.4</span>,
+        )
+        self.play(Create(skip))
+        self.wait(<span class="n">0.35</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/sorting-network.mp4" poster="out/sorting-network-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">06 · sorting network</div>
+          <h2>Sorting network</h2>
+          <p class="blurb">Which compare-swap stages sort eight inputs?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">sorting</span><span class="tag">parallel</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class SortingNetwork(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;BITONIC SORTING NETWORK&quot;</span>, <span class="s">&quot;PARALLEL COMPARE–SWAP STAGES / 8 INPUTS&quot;</span>)
+        ys = np.linspace(<span class="n">2.0</span>, -<span class="n">2.7</span>, <span class="n">8</span>)
+        wires = VGroup(*[Line([-<span class="n">5.5</span>, y, <span class="n">0</span>], [<span class="n">5.4</span>, y, <span class="n">0</span>], color=<span class="s">&quot;#66869b&quot;</span>, stroke_width=<span class="n">1.2</span>) for y in ys])
+        stages = [
+            (<span class="n">0</span>, <span class="n">1</span>, -<span class="n">4.5</span>),
+            (<span class="n">2</span>, <span class="n">3</span>, -<span class="n">4.5</span>),
+            (<span class="n">4</span>, <span class="n">5</span>, -<span class="n">4.5</span>),
+            (<span class="n">6</span>, <span class="n">7</span>, -<span class="n">4.5</span>),
+            (<span class="n">0</span>, <span class="n">2</span>, -<span class="n">3.2</span>),
+            (<span class="n">1</span>, <span class="n">3</span>, -<span class="n">3.2</span>),
+            (<span class="n">4</span>, <span class="n">6</span>, -<span class="n">3.2</span>),
+            (<span class="n">5</span>, <span class="n">7</span>, -<span class="n">3.2</span>),
+            (<span class="n">1</span>, <span class="n">2</span>, -<span class="n">1.9</span>),
+            (<span class="n">5</span>, <span class="n">6</span>, -<span class="n">1.9</span>),
+            (<span class="n">0</span>, <span class="n">4</span>, -<span class="n">0.5</span>),
+            (<span class="n">1</span>, <span class="n">5</span>, -<span class="n">0.5</span>),
+            (<span class="n">2</span>, <span class="n">6</span>, -<span class="n">0.5</span>),
+            (<span class="n">3</span>, <span class="n">7</span>, -<span class="n">0.5</span>),
+            (<span class="n">0</span>, <span class="n">2</span>, <span class="n">0.9</span>),
+            (<span class="n">1</span>, <span class="n">3</span>, <span class="n">0.9</span>),
+            (<span class="n">4</span>, <span class="n">6</span>, <span class="n">0.9</span>),
+            (<span class="n">5</span>, <span class="n">7</span>, <span class="n">0.9</span>),
+            (<span class="n">0</span>, <span class="n">1</span>, <span class="n">2.3</span>),
+            (<span class="n">2</span>, <span class="n">3</span>, <span class="n">2.3</span>),
+            (<span class="n">4</span>, <span class="n">5</span>, <span class="n">2.3</span>),
+            (<span class="n">6</span>, <span class="n">7</span>, <span class="n">2.3</span>),
+            (<span class="n">1</span>, <span class="n">2</span>, <span class="n">3.7</span>),
+            (<span class="n">3</span>, <span class="n">4</span>, <span class="n">3.7</span>),
+            (<span class="n">5</span>, <span class="n">6</span>, <span class="n">3.7</span>),
+        ]
+        comparators = VGroup()
+        for a, b, x in stages:
+            color = [CYAN, INDIGO, VIOLET, ROSE, AMBER][int((x + <span class="n">5</span>) * <span class="n">2</span>) % <span class="n">5</span>]
+            comparators.add(
+                VGroup(
+                    Line([x, ys[a], <span class="n">0</span>], [x, ys[b], <span class="n">0</span>], color=color, stroke_width=<span class="n">2</span>),
+                    Dot([x, ys[a], <span class="n">0</span>], radius=<span class="n">0.07</span>, color=color),
+                    Dot([x, ys[b], <span class="n">0</span>], radius=<span class="n">0.07</span>, color=color),
+                )
+            )
+        labels = VGroup(
+            *[
+                Text(str(v), font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">15</span>, color=INK).move_to([-<span class="n">5.85</span>, y, <span class="n">0</span>])
+                for v, y in zip([<span class="n">42</span>, <span class="n">7</span>, <span class="n">91</span>, <span class="n">18</span>, <span class="n">63</span>, <span class="n">5</span>, <span class="n">32</span>, <span class="n">27</span>], ys, strict=True)
+            ]
+        )
+        output = VGroup(
+            *[
+                Text(str(v), font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">15</span>, color=CYAN).move_to([<span class="n">5.75</span>, y, <span class="n">0</span>])
+                for v, y in zip(sorted([<span class="n">42</span>, <span class="n">7</span>, <span class="n">91</span>, <span class="n">18</span>, <span class="n">63</span>, <span class="n">5</span>, <span class="n">32</span>, <span class="n">27</span>]), ys, strict=True)
+            ]
+        )
+        self.play(FadeIn(header), Create(wires), FadeIn(labels))
+        self.play(LaggedStart(*(Create(stage) for stage in comparators), lag_ratio=<span class="n">0.035</span>), run_time=<span class="n">2.0</span>)
+        self.play(FadeIn(output))
+        self.wait(<span class="n">0.35</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/protocol-state-machine.mp4" poster="out/protocol-state-machine-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">07 · state machine</div>
+          <h2>Protocol state machine</h2>
+          <p class="blurb">How do retry budgets constrain legal state transitions?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">protocol</span><span class="tag">states</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class ProtocolStateMachine(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(
+            <span class="s">&quot;RESILIENT SESSION PROTOCOL&quot;</span>, <span class="s">&quot;LEGAL TRANSITIONS / RETRY BUDGET / TERMINAL STATES&quot;</span>
+        )
+        positions = {
+            <span class="s">&quot;IDLE&quot;</span>: (-<span class="n">4.5</span>, <span class="n">0.8</span>),
+            <span class="s">&quot;AUTH&quot;</span>: (-<span class="n">2.2</span>, <span class="n">1.4</span>),
+            <span class="s">&quot;ACTIVE&quot;</span>: (<span class="n">0.3</span>, <span class="n">1.1</span>),
+            <span class="s">&quot;DRAIN&quot;</span>: (<span class="n">2.7</span>, <span class="n">1.6</span>),
+            <span class="s">&quot;CLOSED&quot;</span>: (<span class="n">4.7</span>, <span class="n">0.5</span>),
+            <span class="s">&quot;RETRY&quot;</span>: (-<span class="n">1.2</span>, -<span class="n">2.0</span>),
+            <span class="s">&quot;FAILED&quot;</span>: (<span class="n">2.0</span>, -<span class="n">2.1</span>),
+        }
+        nodes = {}
+        group = VGroup()
+        for index, (name, (x, y)) in enumerate(positions.items()):
+            ring = Circle(
+                radius=<span class="n">0.55</span> if name not in {<span class="s">&quot;ACTIVE&quot;</span>, <span class="s">&quot;FAILED&quot;</span>} else <span class="n">0.68</span>,
+                color=[CYAN, INDIGO, VIOLET, ROSE, AMBER][index % <span class="n">5</span>],
+                stroke_width=<span class="n">2.4</span>,
+                fill_color=<span class="s">&quot;#132740&quot;</span>,
+                fill_opacity=<span class="n">0.76</span>,
+            ).move_to([x, y, <span class="n">0</span>])
+            label = Text(name, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">15</span>, color=INK).move_to(ring)
+            nodes[name] = VGroup(ring, label)
+            group.add(nodes[name])
+        edges = [
+            (<span class="s">&quot;IDLE&quot;</span>, <span class="s">&quot;AUTH&quot;</span>),
+            (<span class="s">&quot;AUTH&quot;</span>, <span class="s">&quot;ACTIVE&quot;</span>),
+            (<span class="s">&quot;ACTIVE&quot;</span>, <span class="s">&quot;DRAIN&quot;</span>),
+            (<span class="s">&quot;DRAIN&quot;</span>, <span class="s">&quot;CLOSED&quot;</span>),
+            (<span class="s">&quot;AUTH&quot;</span>, <span class="s">&quot;RETRY&quot;</span>),
+            (<span class="s">&quot;ACTIVE&quot;</span>, <span class="s">&quot;RETRY&quot;</span>),
+            (<span class="s">&quot;RETRY&quot;</span>, <span class="s">&quot;AUTH&quot;</span>),
+            (<span class="s">&quot;RETRY&quot;</span>, <span class="s">&quot;FAILED&quot;</span>),
+        ]
+        arrows = VGroup(
+            *[
+                Arrow(
+                    nodes[a].get_center(),
+                    nodes[b].get_center(),
+                    buff=<span class="n">0.62</span>,
+                    color=ROSE if b == <span class="s">&quot;FAILED&quot;</span> else <span class="s">&quot;#7896ab&quot;</span>,
+                    stroke_width=<span class="n">2</span>,
+                    max_tip_length_to_length_ratio=<span class="n">0.12</span>,
+                )
+                for a, b in edges
+            ]
+        )
+        budget = VGroup(
+            *[
+                Rectangle(width=<span class="n">0.42</span>, height=<span class="n">0.12</span>, color=AMBER, fill_color=AMBER, fill_opacity=<span class="n">0.75</span>).shift(
+                    LEFT * <span class="n">1.65</span> + RIGHT * i * <span class="n">0.52</span> + DOWN * <span class="n">3.05</span>
+                )
+                for i in range(<span class="n">5</span>)
+            ]
+        )
+        budget_label = Text(<span class="s">&quot;RETRY BUDGET&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">12</span>, color=MUTED).next_to(
+            budget, LEFT, buff=<span class="n">0.2</span>
+        )
+        self.play(FadeIn(header), LaggedStart(*(FadeIn(node) for node in group), lag_ratio=<span class="n">0.08</span>))
+        self.play(LaggedStart(*(Create(arrow) for arrow in arrows), lag_ratio=<span class="n">0.09</span>), run_time=<span class="n">1.7</span>)
+        self.play(FadeIn(budget), FadeIn(budget_label))
+        self.wait(<span class="n">0.35</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/bayesian-update.mp4" poster="out/bayesian-update-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">08 · distribution explainer</div>
+          <h2>Bayesian update</h2>
+          <p class="blurb">How do prior and likelihood combine into a posterior?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">bayes</span><span class="tag">statistics</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class BayesianUpdate(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;BAYESIAN UPDATE&quot;</span>, <span class="s">&quot;PRIOR × LIKELIHOOD → POSTERIOR&quot;</span>)
+        axes = Axes(
+            x_range=[-<span class="n">4</span>, <span class="n">4</span>, <span class="n">1</span>],
+            y_range=[<span class="n">0</span>, <span class="n">1.2</span>, <span class="n">0.2</span>],
+            x_length=<span class="n">10.1</span>,
+            y_length=<span class="n">4.5</span>,
+            axis_config={<span class="s">&quot;color&quot;</span>: <span class="s">&quot;#57768d&quot;</span>, <span class="s">&quot;include_ticks&quot;</span>: False},
+        ).shift(DOWN * <span class="n">0.45</span>)
+        prior = axes.plot(
+            lambda x: np.exp(-<span class="n">0.5</span> * ((x + <span class="n">1.1</span>) / <span class="n">1.35</span>) ** <span class="n">2</span>) * <span class="n">0.62</span>,
+            x_range=[-<span class="n">4</span>, <span class="n">4</span>, <span class="n">0.03</span>],
+            color=INDIGO,
+            stroke_width=<span class="n">3</span>,
+        )
+        likelihood = axes.plot(
+            lambda x: np.exp(-<span class="n">0.5</span> * ((x - <span class="n">1.0</span>) / <span class="n">0.7</span>) ** <span class="n">2</span>) * <span class="n">0.95</span>,
+            x_range=[-<span class="n">4</span>, <span class="n">4</span>, <span class="n">0.03</span>],
+            color=AMBER,
+            stroke_width=<span class="n">3</span>,
+        )
+        posterior = axes.plot(
+            lambda x: np.exp(-<span class="n">0.5</span> * ((x - <span class="n">0.48</span>) / <span class="n">0.57</span>) ** <span class="n">2</span>) * <span class="n">1.08</span>,
+            x_range=[-<span class="n">4</span>, <span class="n">4</span>, <span class="n">0.03</span>],
+            color=ROSE,
+            stroke_width=<span class="n">4</span>,
+        )
+        legend = (
+            VGroup(
+                *[
+                    VGroup(
+                        Line(ORIGIN, RIGHT * <span class="n">0.45</span>, color=color, stroke_width=<span class="n">4</span>),
+                        Text(name, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">14</span>, color=INK),
+                    ).arrange(RIGHT, buff=<span class="n">0.12</span>)
+                    for name, color in ((<span class="s">&quot;prior&quot;</span>, INDIGO), (<span class="s">&quot;likelihood&quot;</span>, AMBER), (<span class="s">&quot;posterior&quot;</span>, ROSE))
+                ]
+            )
+            .arrange(RIGHT, buff=<span class="n">0.5</span>)
+            .to_edge(DOWN, buff=<span class="n">0.35</span>)
+        )
+        evidence = VGroup(
+            Line(axes.c2p(<span class="n">1.0</span>, <span class="n">0</span>), axes.c2p(<span class="n">1.0</span>, <span class="n">1.05</span>), color=CYAN, stroke_width=<span class="n">1.5</span>),
+            Text(<span class="s">&quot;evidence&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">13</span>, color=CYAN).move_to(axes.c2p(<span class="n">1.0</span>, <span class="n">1.12</span>)),
+        )
+        self.play(FadeIn(header), Create(axes))
+        self.play(Create(prior), Create(likelihood), Create(evidence), run_time=<span class="n">1.2</span>)
+        self.play(Create(posterior), FadeIn(legend), run_time=<span class="n">1.0</span>)
+        self.wait(<span class="n">0.35</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/orbital-transfer.mp4" poster="out/orbital-transfer-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">09 · orbital diagram</div>
+          <h2>Orbital transfer</h2>
+          <p class="blurb">How does a two-burn transfer connect circular orbits?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">orbit</span><span class="tag">physics</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class OrbitalTransfer(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;ORBITAL TRANSFER&quot;</span>, <span class="s">&quot;TWO-BURN MANEUVER / PHASE ALIGNMENT / ENERGY CHANGE&quot;</span>)
+        center = LEFT * <span class="n">0.8</span> + DOWN * <span class="n">0.5</span>
+        inner = Circle(radius=<span class="n">1.35</span>, color=CYAN, stroke_width=<span class="n">1.6</span>, stroke_opacity=<span class="n">0.58</span>).move_to(center)
+        outer = Circle(radius=<span class="n">3.45</span>, color=INDIGO, stroke_width=<span class="n">1.6</span>, stroke_opacity=<span class="n">0.58</span>).move_to(center)
+        sun = Circle(radius=<span class="n">0.42</span>, color=AMBER, fill_color=AMBER, fill_opacity=<span class="n">0.62</span>).move_to(center)
+        transfer = (
+            Circle(radius=<span class="n">2.4</span>, color=ROSE, stroke_width=<span class="n">3</span>).stretch(<span class="n">1.45</span>, <span class="n">0</span>).move_to(center + LEFT * <span class="n">1.05</span>)
+        )
+        craft_a = Dot(center + RIGHT * <span class="n">1.35</span>, radius=<span class="n">0.11</span>, color=CYAN)
+        craft_b = Dot(center + LEFT * <span class="n">3.45</span>, radius=<span class="n">0.13</span>, color=INDIGO)
+        burn_a = Arrow(
+            craft_a.get_center(), craft_a.get_center() + UP * <span class="n">0.85</span>, buff=<span class="n">0.04</span>, color=CYAN, stroke_width=<span class="n">3</span>
+        )
+        burn_b = Arrow(
+            craft_b.get_center(), craft_b.get_center() + DOWN * <span class="n">0.95</span>, buff=<span class="n">0.04</span>, color=INDIGO, stroke_width=<span class="n">3</span>
+        )
+        panel = (
+            VGroup(
+                Text(<span class="s">&quot;Δv₁   2.44 km/s&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">16</span>, color=CYAN),
+                Text(<span class="s">&quot;coast   258 days&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">16</span>, color=MUTED),
+                Text(<span class="s">&quot;Δv₂   1.47 km/s&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">16</span>, color=INDIGO),
+            )
+            .arrange(DOWN, aligned_edge=LEFT, buff=<span class="n">0.22</span>)
+            .to_edge(RIGHT, buff=<span class="n">0.55</span>)
+        )
+        self.play(FadeIn(header), Create(inner), Create(outer), FadeIn(sun))
+        self.play(Create(transfer), FadeIn(craft_a), FadeIn(craft_b), run_time=<span class="n">1.2</span>)
+        self.play(Create(burn_a), Create(burn_b), FadeIn(panel))
+        self.wait(<span class="n">0.35</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/matrix-transform.mp4" poster="out/matrix-transform-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">10 · transform explainer</div>
+          <h2>Matrix transform</h2>
+          <p class="blurb">How does a matrix transform a basis-aligned polygon?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">matrix</span><span class="tag">linear-algebra</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class MatrixTransform(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;MATRIX TRANSFORM&quot;</span>, <span class="s">&quot;BASIS CHANGE / SHEAR / ROTATION&quot;</span>)
+        left_axes = Axes(
+            x_range=[-<span class="n">3</span>, <span class="n">3</span>, <span class="n">1</span>],
+            y_range=[-<span class="n">3</span>, <span class="n">3</span>, <span class="n">1</span>],
+            x_length=<span class="n">4.7</span>,
+            y_length=<span class="n">4.7</span>,
+            axis_config={<span class="s">&quot;color&quot;</span>: <span class="s">&quot;#57768d&quot;</span>, <span class="s">&quot;include_ticks&quot;</span>: False},
+        ).shift(LEFT * <span class="n">3.2</span> + DOWN * <span class="n">0.45</span>)
+        right_axes = left_axes.copy().shift(RIGHT * <span class="n">6.4</span>)
+        source = Polygon(
+            left_axes.c2p(-<span class="n">1</span>, -<span class="n">1</span>),
+            left_axes.c2p(<span class="n">1.4</span>, -<span class="n">1</span>),
+            left_axes.c2p(<span class="n">1.4</span>, <span class="n">1.2</span>),
+            left_axes.c2p(-<span class="n">1</span>, <span class="n">1.2</span>),
+            color=CYAN,
+            fill_color=CYAN,
+            fill_opacity=<span class="n">0.22</span>,
+            stroke_width=<span class="n">2.5</span>,
+        )
+        matrix = np.array([[<span class="n">1.15</span>, <span class="n">0.72</span>], [<span class="n">0.45</span>, <span class="n">1.3</span>]])
+        original = np.array([[-<span class="n">1</span>, -<span class="n">1</span>], [<span class="n">1.4</span>, -<span class="n">1</span>], [<span class="n">1.4</span>, <span class="n">1.2</span>], [-<span class="n">1</span>, <span class="n">1.2</span>]])
+        transformed = original @ matrix.T
+        target = Polygon(
+            *(right_axes.c2p(x, y) for x, y in transformed),
+            color=ROSE,
+            fill_color=ROSE,
+            fill_opacity=<span class="n">0.25</span>,
+            stroke_width=<span class="n">2.5</span>,
+        )
+        arrow = Arrow(LEFT * <span class="n">0.6</span> + DOWN * <span class="n">0.45</span>, RIGHT * <span class="n">0.6</span> + DOWN * <span class="n">0.45</span>, color=AMBER, stroke_width=<span class="n">3</span>)
+        formula = Text(
+            <span class="s">&quot;A = [ 1.15  0.72 ; 0.45  1.30 ]&quot;</span>, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">17</span>, color=INK
+        ).to_edge(DOWN, buff=<span class="n">0.35</span>)
+        self.play(FadeIn(header), Create(left_axes), Create(right_axes))
+        self.play(FadeIn(source), Create(arrow), run_time=<span class="n">0.9</span>)
+        self.play(FadeIn(target), FadeIn(formula), run_time=<span class="n">0.9</span>)
+        self.wait(<span class="n">0.35</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/queueing-flow.mp4" poster="out/queueing-flow-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">11 · process animation</div>
+          <h2>Queueing flow</h2>
+          <p class="blurb">How do arrivals, queues, workers, and backpressure interact?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">queue</span><span class="tag">systems</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class QueueingFlow(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;QUEUEING FLOW&quot;</span>, <span class="s">&quot;ARRIVAL RATE / SERVICE CAPACITY / BACKPRESSURE&quot;</span>)
+        blocks = VGroup()
+        labels = [
+            (<span class="s">&quot;ARRIVALS&quot;</span>, CYAN),
+            (<span class="s">&quot;GATEWAY&quot;</span>, INDIGO),
+            (<span class="s">&quot;QUEUE&quot;</span>, AMBER),
+            (<span class="s">&quot;WORKERS&quot;</span>, VIOLET),
+            (<span class="s">&quot;RESULTS&quot;</span>, ROSE),
+        ]
+        for i, (name, color) in enumerate(labels):
+            box = RoundedRectangle(
+                width=<span class="n">1.75</span>,
+                height=<span class="n">1.15</span>,
+                corner_radius=<span class="n">0.14</span>,
+                color=color,
+                fill_color=<span class="s">&quot;#132740&quot;</span>,
+                fill_opacity=<span class="n">0.78</span>,
+                stroke_width=<span class="n">2</span>,
+            ).move_to(LEFT * <span class="n">4.7</span> + RIGHT * i * <span class="n">2.35</span> + UP * <span class="n">0.4</span>)
+            label = Text(name, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">14</span>, color=INK).move_to(box)
+            blocks.add(VGroup(box, label))
+        arrows = VGroup(
+            *[
+                Arrow(
+                    blocks[i].get_right(),
+                    blocks[i + <span class="n">1</span>].get_left(),
+                    buff=<span class="n">0.12</span>,
+                    color=<span class="s">&quot;#7896ab&quot;</span>,
+                    stroke_width=<span class="n">2.3</span>,
+                )
+                for i in range(<span class="n">4</span>)
+            ]
+        )
+        queue = VGroup(
+            *[
+                Rectangle(
+                    width=<span class="n">0.34</span>, height=<span class="n">0.5</span> + <span class="n">0.12</span> * (i % <span class="n">4</span>), color=AMBER, fill_color=AMBER, fill_opacity=<span class="n">0.62</span>
+                ).move_to(blocks[<span class="n">2</span>].get_bottom() + DOWN * <span class="n">0.72</span> + LEFT * <span class="n">0.82</span> + RIGHT * i * <span class="n">0.46</span>)
+                for i in range(<span class="n">5</span>)
+            ]
+        )
+        workers = VGroup(
+            *[
+                Circle(radius=<span class="n">0.18</span>, color=VIOLET, fill_color=VIOLET, fill_opacity=<span class="n">0.45</span>).move_to(
+                    blocks[<span class="n">3</span>].get_bottom()
+                    + DOWN * <span class="n">0.72</span>
+                    + LEFT * <span class="n">0.48</span>
+                    + RIGHT * (i % <span class="n">3</span>) * <span class="n">0.48</span>
+                    + DOWN * (i // <span class="n">3</span>) * <span class="n">0.48</span>
+                )
+                for i in range(<span class="n">6</span>)
+            ]
+        )
+        metrics = (
+            VGroup(
+                *[
+                    Text(item, font=<span class="s">&quot;Avenir Next&quot;</span>, font_size=<span class="n">15</span>, color=color)
+                    for item, color in (
+                        (<span class="s">&quot;λ = 840/s&quot;</span>, CYAN),
+                        (<span class="s">&quot;μ = 960/s&quot;</span>, VIOLET),
+                        (<span class="s">&quot;p99 = 84 ms&quot;</span>, ROSE),
+                        (<span class="s">&quot;ρ = 0.875&quot;</span>, AMBER),
+                    )
+                ]
+            )
+            .arrange(RIGHT, buff=<span class="n">0.62</span>)
+            .to_edge(DOWN, buff=<span class="n">0.38</span>)
+        )
+        self.play(FadeIn(header), LaggedStart(*(FadeIn(block) for block in blocks), lag_ratio=<span class="n">0.1</span>))
+        self.play(LaggedStart(*(Create(arrow) for arrow in arrows), lag_ratio=<span class="n">0.12</span>), run_time=<span class="n">1.2</span>)
+        self.play(FadeIn(queue), FadeIn(workers), FadeIn(metrics))
+        self.wait(<span class="n">0.35</span>)
+</code></pre></details>
+        </div>
+      </article>
+      <article class="card">
+        <figure class="shot dark"><video src="out/l-system-growth.mp4" poster="out/l-system-growth-transparent.png" controls muted loop playsinline preload="none"></video></figure>
+        <div class="body">
+          <div class="idx">12 · recursive animation</div>
+          <h2>L system growth</h2>
+          <p class="blurb">How does recursive branching produce organic structure?</p>
+          <div class="tags"><span class="tag">manim</span><span class="tag">l-system</span><span class="tag">growth</span><span class="tag">advanced</span></div>
+          <details><summary>src/manim_demos/scenes.py</summary><pre><code>class LSystemGrowth(Scene):
+    def construct(self) -&gt; None:
+        header = title_block(<span class="s">&quot;L-SYSTEM GROWTH&quot;</span>, <span class="s">&quot;RECURSIVE BRANCHING / DEPTH 7 / PHYLLOTAXIS&quot;</span>)
+        branches = VGroup()
+
+        def grow(start: np.ndarray, angle: float, length: float, depth: int) -&gt; None:
+            if depth == <span class="n">0</span>:
+                branches.add(Dot(start, radius=<span class="n">0.045</span>, color=ROSE))
+                return
+            end = start + np.array([np.cos(angle), np.sin(angle), <span class="n">0</span>]) * length
+            branches.add(
+                Line(
+                    start,
+                    end,
+                    color=[CYAN, INDIGO, VIOLET, ROSE, AMBER][depth % <span class="n">5</span>],
+                    stroke_width=<span class="n">0.7</span> + depth * <span class="n">0.42</span>,
+                    stroke_opacity=<span class="n">0.82</span>,
+                )
+            )
+            grow(end, angle + <span class="n">0.39</span> + <span class="n">0.025</span> * depth, length * <span class="n">0.74</span>, depth - <span class="n">1</span>)
+            grow(end, angle - <span class="n">0.53</span> + <span class="n">0.018</span> * depth, length * <span class="n">0.70</span>, depth - <span class="n">1</span>)
+
+        grow(np.array([<span class="n">0.0</span>, -<span class="n">3.25</span>, <span class="n">0.0</span>]), PI / <span class="n">2</span>, <span class="n">1.55</span>, <span class="n">7</span>)
+        generation = (
+            VGroup(
+                *[
+                    Text(
+                        f<span class="s">&quot;G{i}&quot;</span>,
+                        font=<span class="s">&quot;Avenir Next&quot;</span>,
+                        font_size=<span class="n">12</span>,
+                        color=[CYAN, INDIGO, VIOLET, ROSE, AMBER][i % <span class="n">5</span>],
+                    )
+                    for i in range(<span class="n">1</span>, <span class="n">8</span>)
+                ]
+            )
+            .arrange(RIGHT, buff=<span class="n">0.42</span>)
+            .to_edge(DOWN, buff=<span class="n">0.3</span>)
+        )
+        self.play(FadeIn(header))
+        self.play(LaggedStart(*(Create(branch) for branch in branches), lag_ratio=<span class="n">0.008</span>), run_time=<span class="n">2.4</span>)
+        self.play(FadeIn(generation))
+        self.wait(<span class="n">0.35</span>)
+</code></pre></details>
+        </div>
+      </article>
+  </main>
+  <footer>
+    Generated by <code>tools/gallery.py</code> — regenerate with <code>just gallery</code>
+    after <code>just build</code>. Images are referenced from
+    <code>out/</code>, so open this file straight from the checkout.
+  </footer>
+</div>
+</body>
+</html>

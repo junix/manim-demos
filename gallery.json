@@ -1,0 +1,12 @@
+{
+  "title": "manim-demos",
+  "library": "Manim Community",
+  "tagline": "Twelve animated explainers, each a complete scene rather than a single transform — every card plays the rendered MP4 over its final frame.",
+  "rebuild": "just build",
+  "prefer": [
+    "mp4",
+    "png"
+  ],
+  "backdrop": "dark",
+  "code_search": "src/manim_demos/scenes.py"
+}

@@ -6,7 +6,7 @@ default: build
 # and media/; outputs are validated for transparency and content.
 build:
     uv sync
-    uv run python scripts/render.py
+    uv run python tools/render.py
 
 # Render, then lint and run the test suite.
 test: build
@@ -16,3 +16,13 @@ test: build
 # Demos repo — no binary, no launcher (ADR-749: nothing to install).
 install:
     @echo "manim-demos: demos repo, nothing to install"
+
+# Remove generated images.
+clean:
+    rm -rf out
+    mkdir -p out
+    touch out/.gitkeep
+
+# Rebuild gallery.html from catalog.json, README.md and the artifacts in out/.
+gallery:
+    python3 tools/gallery.py
