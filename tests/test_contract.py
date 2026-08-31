@@ -203,6 +203,14 @@ def test_newest_returns_the_most_recent_match_recursively(monkeypatch, tmp_path)
     assert render.newest("scene*.png") == fresh
 
 
+def test_newest_returns_a_lone_match_from_any_depth(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(render, "MEDIA", tmp_path)
+    lone = tmp_path / "videos" / "1080p60" / "only.png"  # no siblings to pick between
+    lone.parent.mkdir(parents=True)
+    lone.write_bytes(PNG_MAGIC)
+    assert render.newest("only.png") == lone
+
+
 def test_run_prefixes_and_executes_from_the_repo_root(capfd) -> None:
     command = [sys.executable, "-c", "import os; print(os.getcwd())"]
     render.run(command)
@@ -360,6 +368,103 @@ def test_main_re_renders_into_an_existing_out_tree_without_clobbering(monkeypatc
     lines = capsys.readouterr().out.splitlines()
     assert [json.loads(line)["scene"] for line in lines[: len(SCENES)]] == list(SCENES)
     assert json.loads("\n".join(lines[len(SCENES) :]))[-1]["scene"] == list(SCENES)[-1]
+
+
+def test_main_with_no_scenes_renders_nothing_and_prints_an_empty_report(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    out = tmp_path / "out"
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render, "SCENES", {})
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    commands: list[list[str]] = []
+    copies: list[tuple[Path, Path]] = []
+    probes: list[list[str]] = []
+    monkeypatch.setattr(render, "run", commands.append)
+    monkeypatch.setattr(
+        render, "newest", lambda pattern: pytest.fail(f"newest({pattern!r}) called with no scenes")
+    )
+    monkeypatch.setattr(
+        render.shutil, "copy2", lambda source, target: copies.append((source, target))
+    )
+    monkeypatch.setattr(
+        render.subprocess, "check_output", lambda command, text: probes.append(command)
+    )
+    monkeypatch.setattr(
+        render,
+        "validate_png",
+        lambda path: pytest.fail(f"validate_png({path!r}) called with no scenes"),
+    )
+
+    render.main()
+
+    assert commands == []  # zero scenes means zero manim invocations...
+    assert copies == []  # ...no artifact deliveries...
+    assert probes == []  # ...and no duration probes
+    assert out.is_dir()  # the output tree is still created before the loop
+    assert list(out.iterdir()) == []
+    assert capsys.readouterr().out == "[]\n"  # the final report degenerates to an empty list
+
+
+def test_main_aborts_without_a_report_when_the_delivered_still_fails_validation(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    out = tmp_path / "out"
+    media = tmp_path / "media"
+    media.mkdir()
+    still_source = media / "still.png"
+    still_source.write_bytes(PNG_MAGIC)  # real bytes: the real copy2 must deliver them unchanged
+    movie_source = media / "movie.mp4"
+    movie_source.write_bytes(MP4_FTYP)
+    first_slug, first_class = next(iter(SCENES.items()))
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    commands: list[list[str]] = []
+    probes: list[list[str]] = []
+    monkeypatch.setattr(render, "run", commands.append)
+
+    def newest_both_artifacts(pattern: str) -> Path:
+        return movie_source if pattern == f"{first_slug}.mp4" else still_source
+
+    monkeypatch.setattr(render, "newest", newest_both_artifacts)
+
+    def fake_check_output(command: list[str], text: bool) -> str:
+        probes.append(command)
+        return "3.249\n"
+
+    monkeypatch.setattr(render.subprocess, "check_output", fake_check_output)
+
+    def reject(path: Path) -> dict[str, object]:
+        raise RuntimeError(f"{path.name}: weak RGBA content t=0 v=10000 c=0")
+
+    monkeypatch.setattr(render, "validate_png", reject)
+
+    with pytest.raises(RuntimeError) as excinfo:
+        render.main()
+
+    assert str(excinfo.value) == f"{first_slug}-transparent.png: weak RGBA content t=0 v=10000 c=0"
+    assert len(commands) == 2  # both the still pass and the movie pass ran before validation
+    assert commands[0][-2:] == [str(render.SOURCE), first_class]
+    assert "-s" in commands[0]  # the first is the transparent still render...
+    assert commands[1][-2:] == [str(render.SOURCE), first_class]
+    assert "-s" not in commands[1]  # ...the second the movie render
+    assert probes == [
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=nw=1:nk=1",
+            str(out / f"{first_slug}.mp4"),  # the probe targets the delivered copy, not the media source
+        ]
+    ]
+    delivered = sorted(out.iterdir())
+    assert delivered == sorted([out / f"{first_slug}-transparent.png", out / f"{first_slug}.mp4"])
+    assert (out / f"{first_slug}-transparent.png").read_bytes() == PNG_MAGIC
+    assert (out / f"{first_slug}.mp4").read_bytes() == MP4_FTYP  # no rollback of delivered artifacts
+    assert capsys.readouterr().out == ""  # the per-scene line follows validation, so nothing is printed
 
 
 def test_main_aborts_without_a_report_when_manim_output_goes_missing(
