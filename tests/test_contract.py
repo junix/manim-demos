@@ -488,3 +488,92 @@ def test_main_aborts_without_a_report_when_manim_output_goes_missing(
     assert commands[0][-2:] == [str(render.SOURCE), next(iter(SCENES.values()))]
     assert capsys.readouterr().out == ""  # no per-scene line and no final report on the error path
     assert list(out.iterdir()) == []  # and nothing partial landed in the output tree
+
+
+def test_main_keeps_completed_scenes_report_lines_when_a_later_scene_aborts(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    out = tmp_path / "out"
+    media = tmp_path / "media"
+    media.mkdir()
+    still_source = media / "still.png"
+    still_source.write_bytes(PNG_MAGIC)  # real bytes: the real copy2 must deliver them unchanged
+    movie_source = media / "movie.mp4"
+    movie_source.write_bytes(MP4_FTYP)
+    first_slug, first_class = next(iter(SCENES.items()))
+    second_slug, second_class = list(SCENES.items())[1]
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    commands: list[list[str]] = []
+    probes: list[list[str]] = []
+    monkeypatch.setattr(render, "run", commands.append)
+
+    def newest_until_the_second_scene(pattern: str) -> Path:
+        if pattern == f"{second_slug}*.png":
+            raise RuntimeError(f"Manim did not produce {pattern}")
+        return movie_source if pattern == f"{first_slug}.mp4" else still_source
+
+    monkeypatch.setattr(render, "newest", newest_until_the_second_scene)
+
+    def fake_check_output(command: list[str], text: bool) -> str:
+        probes.append(command)
+        return "3.249\n"
+
+    monkeypatch.setattr(render.subprocess, "check_output", fake_check_output)
+    monkeypatch.setattr(
+        render,
+        "validate_png",
+        lambda path: {"size": (854, 480), "transparent_pct": 8.4, "visible_pct": 91.2, "colorful": 23456},
+    )
+
+    with pytest.raises(RuntimeError) as excinfo:
+        render.main()
+
+    assert str(excinfo.value) == f"Manim did not produce {second_slug}*.png"
+    assert len(commands) == 3  # the first scene's still + movie passes, then the second scene's still pass
+    assert [command[-1] for command in commands] == [first_class, first_class, second_class]
+    assert "-s" in commands[0] and "-s" not in commands[1] and "-s" in commands[2]
+    assert probes == [
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=nw=1:nk=1",
+            str(out / f"{first_slug}.mp4"),  # only the first scene's delivered video is ever probed
+        ]
+    ]
+    delivered = sorted(out.iterdir())
+    assert delivered == sorted([out / f"{first_slug}-transparent.png", out / f"{first_slug}.mp4"])
+    assert (out / f"{first_slug}-transparent.png").read_bytes() == PNG_MAGIC
+    assert (out / f"{first_slug}.mp4").read_bytes() == MP4_FTYP  # scene 1's deliveries survive the abort
+    assert capsys.readouterr().out == (
+        json.dumps(
+            {
+                "scene": first_slug,
+                "size": (854, 480),
+                "transparent_pct": 8.4,
+                "visible_pct": 91.2,
+                "colorful": 23456,
+                "video_seconds": 3.25,
+            }
+        )
+        + "\n"
+    )  # the per-scene line is printed inside the loop, so completed scenes stay reported; no final report
+
+
+def test_main_refuses_to_render_when_out_is_occupied_by_a_regular_file(monkeypatch, tmp_path) -> None:
+    out = tmp_path / "out"
+    out.write_text("occupied")  # exist_ok tolerates an existing directory, never a stray file
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    commands: list[list[str]] = []
+    monkeypatch.setattr(render, "run", commands.append)
+    with pytest.raises(FileExistsError) as excinfo:
+        render.main()
+    assert str(excinfo.value) == f"[Errno 17] File exists: '{out}'"
+    assert excinfo.value.filename == str(out)
+    assert commands == []  # the failure fires before a single manim invocation
+    assert out.read_text() == "occupied"  # and the occupying file is left untouched
