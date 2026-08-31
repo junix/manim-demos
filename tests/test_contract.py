@@ -128,6 +128,24 @@ def test_validate_png_accepts_a_frame_exactly_at_the_acceptance_floors(tmp_path)
     }
 
 
+def test_validate_png_rounds_reported_percentages_to_one_decimal(tmp_path) -> None:
+    path = write_frame(
+        tmp_path / "rounding.png",
+        [
+            (833, CLEAR_PIXEL),  # 8.33% transparent: the reported value must round, not truncate
+            (150, HIDDEN_PIXEL),
+            (1600, CHROMATIC_PIXEL),
+            (7417, FLAT_ALPHA_PIXEL),
+        ],
+    )
+    assert render.validate_png(path) == {
+        "size": FRAME_SIZE,
+        "transparent_pct": 8.3,
+        "visible_pct": 90.2,
+        "colorful": 1600,
+    }
+
+
 @pytest.mark.parametrize(
     ("filename", "segments", "detail"),
     [
@@ -315,3 +333,53 @@ def test_main_renders_every_scene_and_prints_the_report(monkeypatch, tmp_path, c
     lines = capsys.readouterr().out.splitlines()
     assert lines[: len(SCENES)] == [json.dumps(item) for item in report]
     assert "\n".join(lines[len(SCENES) :]) == json.dumps(report, indent=2)
+
+
+def test_main_re_renders_into_an_existing_out_tree_without_clobbering(monkeypatch, tmp_path, capsys) -> None:
+    out = tmp_path / "out"
+    out.mkdir()  # a previous build already delivered artifacts; exist_ok must tolerate them
+    stale = out / "retired-scene-transparent.png"
+    stale.write_bytes(PNG_MAGIC)
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    commands: list[list[str]] = []
+    monkeypatch.setattr(render, "run", commands.append)
+    monkeypatch.setattr(render, "newest", lambda pattern: tmp_path / "media" / pattern.replace("*", "-found"))
+    monkeypatch.setattr(render.shutil, "copy2", lambda source, target: None)
+    monkeypatch.setattr(render.subprocess, "check_output", lambda command, text: "3.249\n")
+    monkeypatch.setattr(
+        render,
+        "validate_png",
+        lambda path: {"size": (854, 480), "transparent_pct": 8.4, "visible_pct": 91.2, "colorful": 23456},
+    )
+
+    render.main()
+
+    assert stale.read_bytes() == PNG_MAGIC  # prior deliverables survive a re-render
+    assert len(commands) == 2 * len(SCENES)  # every scene still gets its still + movie pass
+    lines = capsys.readouterr().out.splitlines()
+    assert [json.loads(line)["scene"] for line in lines[: len(SCENES)]] == list(SCENES)
+    assert json.loads("\n".join(lines[len(SCENES) :]))[-1]["scene"] == list(SCENES)[-1]
+
+
+def test_main_aborts_without_a_report_when_manim_output_goes_missing(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    out = tmp_path / "out"
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    commands: list[list[str]] = []
+    monkeypatch.setattr(render, "run", commands.append)
+
+    def missing_newest(pattern: str) -> Path:
+        raise RuntimeError(f"Manim did not produce {pattern}")
+
+    monkeypatch.setattr(render, "newest", missing_newest)
+    first_slug = next(iter(SCENES))
+    with pytest.raises(RuntimeError) as excinfo:
+        render.main()
+    assert str(excinfo.value) == f"Manim did not produce {first_slug}*.png"
+    assert len(commands) == 1  # only the first scene's still render ran before the abort
+    assert commands[0][-2:] == [str(render.SOURCE), next(iter(SCENES.values()))]
+    assert capsys.readouterr().out == ""  # no per-scene line and no final report on the error path
+    assert list(out.iterdir()) == []  # and nothing partial landed in the output tree
