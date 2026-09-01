@@ -23,7 +23,7 @@ PNG_COLORFUL_MIN = 1600
 CATALOG_FIELDS = {"id", "use", "question", "family", "complexity", "tags"}
 
 # tools/render.py lives outside the package; load it by path to test its helpers directly.
-RENDER_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "render.py"
+RENDER_SCRIPT = Path(__file__).resolve().parents[1] / "tools" / "render.py"
 
 
 def _load_render_module():
@@ -577,3 +577,43 @@ def test_main_refuses_to_render_when_out_is_occupied_by_a_regular_file(monkeypat
     assert excinfo.value.filename == str(out)
     assert commands == []  # the failure fires before a single manim invocation
     assert out.read_text() == "occupied"  # and the occupying file is left untouched
+
+
+def test_main_aborts_mid_scene_when_the_movie_artifact_goes_missing(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    out = tmp_path / "out"
+    media = tmp_path / "media"
+    media.mkdir()
+    still_source = media / "still.png"
+    still_source.write_bytes(PNG_MAGIC)  # real bytes: the real copy2 must deliver them unchanged
+    first_slug, first_class = next(iter(SCENES.items()))
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    commands: list[list[str]] = []
+    probes: list[list[str]] = []
+    monkeypatch.setattr(render, "run", commands.append)
+
+    def newest_until_the_movie(pattern: str) -> Path:
+        if pattern == f"{first_slug}.mp4":
+            raise RuntimeError(f"Manim did not produce {pattern}")
+        return still_source
+
+    monkeypatch.setattr(render, "newest", newest_until_the_movie)
+    monkeypatch.setattr(
+        render.subprocess, "check_output", lambda command, text: probes.append(command)
+    )
+
+    with pytest.raises(RuntimeError) as excinfo:
+        render.main()
+
+    assert str(excinfo.value) == f"Manim did not produce {first_slug}.mp4"
+    assert len(commands) == 2  # both the still pass and the movie pass ran before the abort
+    assert commands[0][-2:] == [str(render.SOURCE), first_class]
+    assert "-s" in commands[0]  # the first is the transparent still render...
+    assert commands[1][-2:] == [str(render.SOURCE), first_class]
+    assert "-s" not in commands[1]  # ...the second the movie render
+    assert probes == []  # a duration is never probed for an undelivered video
+    assert list(out.iterdir()) == [out / f"{first_slug}-transparent.png"]  # delivered still stays: no rollback
+    assert (out / f"{first_slug}-transparent.png").read_bytes() == PNG_MAGIC
+    assert capsys.readouterr().out == ""  # no per-scene line and no final report on the error path
