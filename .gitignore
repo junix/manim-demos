@@ -6,3 +6,13 @@ media/
 out/*
 !out/*-transparent.png
 !out/*.mp4
+# --- appended by gitignore-sweep on 2026-09-03 ---
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+*.egg-info/
+.mypy_cache/
+dist/
+build/
