@@ -32,6 +32,19 @@ h1{margin:0;font-size:30px;letter-spacing:-.02em;font-weight:650}
 .pill{font:12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);
   background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:6px 11px}
 .pill b{color:var(--ink);font-weight:600}
+.controls{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  padding:12px 0;margin:0 0 26px;background:linear-gradient(var(--bg) 80%,transparent)}
+.controls input{flex:1 1 220px;max-width:400px;border:1px solid var(--line);border-radius:10px;
+  background:var(--panel);color:var(--ink);padding:9px 13px;font-size:14px;font-family:inherit}
+.controls input:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);cursor:pointer;
+  background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:6px 11px}
+.chip span{color:var(--faint);margin-left:3px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.chip[aria-pressed="true"] span{color:var(--bg);opacity:.75}
+#count{margin-left:auto;color:var(--muted);font:12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap}
+#empty{color:var(--muted);font-size:14px}
 .grid{display:grid;gap:26px;grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
   overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
@@ -86,8 +99,14 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
     <p class="tagline">Twelve animated explainers, each a complete scene rather than a single transform — every card plays the rendered MP4 over its final frame.</p>
     <div class="meta"><span class="pill">Manim Community</span><span class="pill"><b>12</b> demos</span><span class="pill"><b>12</b> rendered</span></div>
   </header>
+  <section class="controls" aria-label="Gallery filters">
+    <input id="q" type="search" placeholder="Filter by title, blurb, tag, or family…" autocomplete="off" aria-label="Filter demos">
+    
+    <output id="count" aria-live="polite">12 shown</output>
+  </section>
+  <p id="empty" hidden>No demos match the current filter.</p>
   <main class="grid">
-      <article class="card">
+      <article class="card" data-family="trace" data-search="algorithm trace how does binary search preserve its interval invariant? manim algorithm search advanced 01 · trace trace">
         <figure class="shot dark"><video src="out/algorithm-trace.mp4" poster="out/algorithm-trace-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">01 · trace</div>
@@ -156,7 +175,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="temporal math" data-search="fourier phasors how do rotating harmonics synthesize a waveform? manim fourier phasors advanced 02 · temporal math temporal math">
         <figure class="shot dark"><video src="out/fourier-phasors.mp4" poster="out/fourier-phasors-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">02 · temporal math</div>
@@ -234,7 +253,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="proof" data-search="geometric proof why does the pythagorean identity follow by rearrangement? manim geometry proof advanced 03 · proof proof">
         <figure class="shot dark"><video src="out/geometric-proof.mp4" poster="out/geometric-proof-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">03 · proof</div>
@@ -310,7 +329,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="optimization trace" data-search="gradient descent how do adaptive steps converge in a loss basin? manim optimization gradient advanced 04 · optimization trace optimization trace">
         <figure class="shot dark"><video src="out/gradient-descent.mp4" poster="out/gradient-descent-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">04 · optimization trace</div>
@@ -377,7 +396,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="network animation" data-search="neural forward pass how do activations move through a residual encoder? manim neural-network flow advanced 05 · network animation network animation">
         <figure class="shot dark"><video src="out/neural-forward-pass.mp4" poster="out/neural-forward-pass-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">05 · network animation</div>
@@ -441,7 +460,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="sorting network" data-search="sorting network which compare-swap stages sort eight inputs? manim sorting parallel advanced 06 · sorting network sorting network">
         <figure class="shot dark"><video src="out/sorting-network.mp4" poster="out/sorting-network-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">06 · sorting network</div>
@@ -509,7 +528,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="state machine" data-search="protocol state machine how do retry budgets constrain legal state transitions? manim protocol states advanced 07 · state machine state machine">
         <figure class="shot dark"><video src="out/protocol-state-machine.mp4" poster="out/protocol-state-machine-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">07 · state machine</div>
@@ -584,7 +603,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="distribution explainer" data-search="bayesian update how do prior and likelihood combine into a posterior? manim bayes statistics advanced 08 · distribution explainer distribution explainer">
         <figure class="shot dark"><video src="out/bayesian-update.mp4" poster="out/bayesian-update-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">08 · distribution explainer</div>
@@ -643,7 +662,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="orbital diagram" data-search="orbital transfer how does a two-burn transfer connect circular orbits? manim orbit physics advanced 09 · orbital diagram orbital diagram">
         <figure class="shot dark"><video src="out/orbital-transfer.mp4" poster="out/orbital-transfer-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">09 · orbital diagram</div>
@@ -684,7 +703,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="transform explainer" data-search="matrix transform how does a matrix transform a basis-aligned polygon? manim matrix linear-algebra advanced 10 · transform explainer transform explainer">
         <figure class="shot dark"><video src="out/matrix-transform.mp4" poster="out/matrix-transform-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">10 · transform explainer</div>
@@ -733,7 +752,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="process animation" data-search="queueing flow how do arrivals, queues, workers, and backpressure interact? manim queue systems advanced 11 · process animation process animation">
         <figure class="shot dark"><video src="out/queueing-flow.mp4" poster="out/queueing-flow-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">11 · process animation</div>
@@ -817,7 +836,7 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
 </code></pre></details>
         </div>
       </article>
-      <article class="card">
+      <article class="card" data-family="recursive animation" data-search="l system growth how does recursive branching produce organic structure? manim l-system growth advanced 12 · recursive animation recursive animation">
         <figure class="shot dark"><video src="out/l-system-growth.mp4" poster="out/l-system-growth-transparent.png" controls muted loop playsinline preload="none"></video></figure>
         <div class="body">
           <div class="idx">12 · recursive animation</div>
@@ -876,5 +895,38 @@ footer code{background:var(--chip);border-radius:4px;padding:2px 6px;
     <code>out/</code>, so open this file straight from the checkout.
   </footer>
 </div>
+<script>
+(function(){
+  var q=document.getElementById('q'),count=document.getElementById('count'),empty=document.getElementById('empty');
+  var cards=[].slice.call(document.querySelectorAll('.card'));
+  var chips=[].slice.call(document.querySelectorAll('.chip'));
+  var family='';
+  function apply(){
+    var t=q.value.trim().toLowerCase(),n=0;
+    for(var i=0;i<cards.length;i++){
+      var c=cards[i];
+      var ok=(!family||c.getAttribute('data-family')===family)&&
+             (!t||(c.getAttribute('data-search')||'').indexOf(t)>=0);
+      c.style.display=ok?'':'none';
+      if(ok)n++;
+    }
+    count.value=n+' / '+cards.length+' shown';
+    empty.hidden=n>0;
+    for(var j=0;j<chips.length;j++){
+      var ch=chips[j];
+      ch.setAttribute('aria-pressed',String(ch.getAttribute('data-family')===family));
+    }
+  }
+  q.addEventListener('input',apply);
+  chips.forEach(function(ch){
+    ch.addEventListener('click',function(){
+      var f=ch.getAttribute('data-family');
+      family=(f===family)?'':f;
+      apply();
+    });
+  });
+  apply();
+})();
+</script>
 </body>
 </html>

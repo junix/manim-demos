@@ -2,6 +2,8 @@
 
 Twelve explanatory reference scenes where the transparent PNG is the primary deliverable and a short MP4 preserves the temporal argument.
 
+Browse every demo with its source in **[gallery.html](gallery.html)** — searchable, follows your light/dark theme.
+
 `catalog.json` records the teaching use, question, temporal visual family, complexity, and tags.
 
 | Search trace | Fourier | Geometry proof | Gradient descent |
