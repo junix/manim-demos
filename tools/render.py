@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import math
 import shutil
 import subprocess
+import tempfile
+import time
 from pathlib import Path
 
 from PIL import Image
@@ -20,8 +23,14 @@ def run(command: list[str]) -> None:
     subprocess.run(command, check=True, cwd=ROOT)
 
 
-def newest(pattern: str) -> Path:
-    matches = list(MEDIA.rglob(pattern))
+def newest(pattern: str, since: float | None = None) -> Path:
+    # With `since`, artifacts left by earlier runs are ignored, so a render
+    # that silently produced nothing never picks up a stale media match.
+    matches = [
+        path
+        for path in MEDIA.rglob(pattern)
+        if since is None or path.stat().st_mtime >= since
+    ]
     if not matches:
         raise RuntimeError(f"Manim did not produce {pattern}")
     return max(matches, key=lambda path: path.stat().st_mtime_ns)
@@ -45,12 +54,36 @@ def validate_png(path: Path) -> dict[str, object]:
     }
 
 
+def probe_duration(video: Path) -> float:
+    probe = subprocess.check_output(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=nw=1:nk=1",
+            str(video),
+        ],
+        text=True,
+    ).strip()
+    try:
+        duration = float(probe)
+    except ValueError:
+        raise RuntimeError(f"{video.name}: invalid video duration {probe!r}") from None
+    if not math.isfinite(duration) or duration <= 0:
+        raise RuntimeError(f"{video.name}: invalid video duration {probe!r}")
+    return duration
+
+
 def main() -> None:
     if not shutil.which("ffprobe"):
         raise SystemExit("ffprobe is required")
     OUT.mkdir(exist_ok=True)
     report = []
     for slug, class_name in SCENES.items():
+        started = time.time()
         run(
             [
                 "manim",
@@ -68,8 +101,8 @@ def main() -> None:
                 class_name,
             ]
         )
-        png = OUT / f"{slug}-transparent.png"
-        shutil.copy2(newest(f"{slug}*.png"), png)
+        still_source = newest(f"{slug}*.png", started)
+        started = time.time()
         run(
             [
                 "manim",
@@ -85,22 +118,23 @@ def main() -> None:
                 class_name,
             ]
         )
-        video = OUT / f"{slug}.mp4"
-        shutil.copy2(newest(f"{slug}.mp4"), video)
-        probe = subprocess.check_output(
-            [
-                "ffprobe",
-                "-v",
-                "error",
-                "-show_entries",
-                "format=duration",
-                "-of",
-                "default=nw=1:nk=1",
-                str(video),
-            ],
-            text=True,
-        ).strip()
-        item = {"scene": slug, **validate_png(png), "video_seconds": round(float(probe), 2)}
+        video_source = newest(f"{slug}.mp4", started)
+        # Stage both artifacts from this render run and validate them before
+        # either touches out/: a failed movie render, a weak still, or an
+        # undecodable video must leave the previously delivered pair in place.
+        with tempfile.TemporaryDirectory() as staging:
+            staged_still = Path(staging) / f"{slug}-transparent.png"
+            staged_video = Path(staging) / f"{slug}.mp4"
+            shutil.copy2(still_source, staged_still)
+            shutil.copy2(video_source, staged_video)
+            duration = probe_duration(staged_video)
+            item = {
+                "scene": slug,
+                **validate_png(staged_still),
+                "video_seconds": round(duration, 2),
+            }
+            shutil.copy2(staged_still, OUT / staged_still.name)
+            shutil.copy2(staged_video, OUT / staged_video.name)
         print(json.dumps(item))
         report.append(item)
     print(json.dumps(report, indent=2))

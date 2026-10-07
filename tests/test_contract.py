@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,9 @@ from manim_demos import SCENES, scenes
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 MP4_FTYP = b"ftyp"
+# A pair already delivered by an earlier build; failure paths must leave it untouched.
+PREVIOUS_STILL = b"previous transparent still"
+PREVIOUS_MOVIE = b"previous movie"
 # Acceptance floors mirrored from tools/render.py validate_png().
 PNG_TRANSPARENT_FRACTION = 0.08
 PNG_VISIBLE_FRACTION = 0.025
@@ -24,6 +28,19 @@ CATALOG_FIELDS = {"id", "use", "question", "family", "complexity", "tags"}
 
 # tools/render.py lives outside the package; load it by path to test its helpers directly.
 RENDER_SCRIPT = Path(__file__).resolve().parents[1] / "tools" / "render.py"
+
+
+def probe_command(video: Path) -> list[str]:
+    return [
+        "ffprobe",
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "default=nw=1:nk=1",
+        str(video),
+    ]
 
 
 def _load_render_module():
@@ -211,6 +228,55 @@ def test_newest_returns_a_lone_match_from_any_depth(monkeypatch, tmp_path) -> No
     assert render.newest("only.png") == lone
 
 
+def test_newest_ignores_matches_older_than_the_render_start(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(render, "MEDIA", tmp_path)
+    stale = tmp_path / "videos" / "scene-stale.png"
+    stale.parent.mkdir()
+    fresh = tmp_path / "scene-fresh.png"
+    stale.write_bytes(PNG_MAGIC)
+    fresh.write_bytes(PNG_MAGIC)
+    os.utime(stale, (1_000_000_000, 1_000_000_000))
+    os.utime(fresh, (1_600_000_000, 1_600_000_000))
+    assert render.newest("scene*.png", 1_500_000_000) == fresh  # only this run's file counts
+
+
+def test_newest_treats_stale_only_matches_as_missing(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(render, "MEDIA", tmp_path)
+    stale = tmp_path / "videos" / "scene-stale.png"  # every match predates the render
+    stale.parent.mkdir()
+    stale.write_bytes(PNG_MAGIC)
+    os.utime(stale, (1_000_000_000, 1_000_000_000))
+    with pytest.raises(RuntimeError) as excinfo:
+        render.newest("scene*.png", 1_500_000_000)
+    assert str(excinfo.value) == "Manim did not produce scene*.png"
+
+
+def test_probe_duration_returns_the_probed_seconds(monkeypatch, tmp_path) -> None:
+    video = tmp_path / "scene.mp4"
+    video.write_bytes(MP4_FTYP)
+    seen: list[list[str]] = []
+    monkeypatch.setattr(
+        render.subprocess, "check_output", lambda command, text: seen.append(command) or "3.249\n"
+    )
+    assert render.probe_duration(video) == 3.249
+    assert seen == [probe_command(video)]
+
+
+@pytest.mark.parametrize(
+    "probe",
+    ["0.000", "nan", "inf", "-3.5", "N/A"],
+)
+def test_probe_duration_rejects_non_positive_and_non_finite_durations(
+    monkeypatch, tmp_path, probe
+) -> None:
+    video = tmp_path / "scene.mp4"
+    video.write_bytes(MP4_FTYP)
+    monkeypatch.setattr(render.subprocess, "check_output", lambda command, text: probe + "\n")
+    with pytest.raises(RuntimeError) as excinfo:
+        render.probe_duration(video)
+    assert str(excinfo.value) == f"scene.mp4: invalid video duration {probe!r}"
+
+
 def test_run_prefixes_and_executes_from_the_repo_root(capfd) -> None:
     command = [sys.executable, "-c", "import os; print(os.getcwd())"]
     render.run(command)
@@ -242,15 +308,29 @@ def test_main_requires_ffprobe_before_any_rendering(monkeypatch, tmp_path) -> No
 def test_main_renders_every_scene_and_prints_the_report(monkeypatch, tmp_path, capsys) -> None:
     out = tmp_path / "out"
     media = tmp_path / "media"
+    staging = tmp_path / "staging"
     monkeypatch.setattr(render, "OUT", out)
     monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
     events: list[tuple] = []
+    sinces: list[float] = []
+
+    class FakeTemporaryDirectory:
+        def __enter__(self) -> str:
+            staging.mkdir(exist_ok=True)
+            return str(staging)
+
+        def __exit__(self, *exc: object) -> None:
+            return None
+
+    monkeypatch.setattr(render.tempfile, "TemporaryDirectory", lambda: FakeTemporaryDirectory())
 
     def fake_run(command: list[str]) -> None:
         events.append(("run", command))
 
-    def fake_newest(pattern: str) -> Path:
+    def fake_newest(pattern: str, since: float | None = None) -> Path:
         events.append(("newest", pattern))
+        if since is not None:
+            sinces.append(since)
         return media / pattern.replace("*", "-found")
 
     def fake_copy2(source: Path, target: Path) -> None:
@@ -259,7 +339,7 @@ def test_main_renders_every_scene_and_prints_the_report(monkeypatch, tmp_path, c
     def fake_check_output(command: list[str], text: bool) -> str:
         assert text is True
         events.append(("probe", command))
-        return "3.249\n"  # rounds to 3.25 via round(float(probe), 2)
+        return "3.249\n"  # rounds to 3.25 via round(duration, 2)
 
     def fake_validate_png(path: Path) -> dict[str, object]:
         events.append(("validate", path))
@@ -271,14 +351,20 @@ def test_main_renders_every_scene_and_prints_the_report(monkeypatch, tmp_path, c
     monkeypatch.setattr(render.shutil, "copy2", fake_copy2)
     monkeypatch.setattr(render.subprocess, "check_output", fake_check_output)
 
+    before = time.time()
     render.main()
+    after = time.time()
 
     assert out.is_dir()  # OUT.mkdir(exist_ok=True) created the fresh output tree
+    assert len(sinces) == 2 * len(SCENES)  # each render pass passes its own start time
+    assert all(before <= since <= after for since in sinces)
     report = []
     expected_events = []
     for slug, class_name in SCENES.items():
         png = out / f"{slug}-transparent.png"
         video = out / f"{slug}.mp4"
+        staged_png = staging / f"{slug}-transparent.png"
+        staged_video = staging / f"{slug}.mp4"
         still = [
             "manim",
             "-ql",
@@ -307,25 +393,17 @@ def test_main_renders_every_scene_and_prints_the_report(monkeypatch, tmp_path, c
             str(render.SOURCE),
             class_name,
         ]
-        probe = [
-            "ffprobe",
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=nw=1:nk=1",
-            str(video),
-        ]
         expected_events += [
             ("run", still),
             ("newest", f"{slug}*.png"),
-            ("copy", media / f"{slug}-found.png", png),
             ("run", movie),
             ("newest", f"{slug}.mp4"),
-            ("copy", media / f"{slug}.mp4", video),
-            ("probe", probe),
-            ("validate", png),
+            ("copy", media / f"{slug}-found.png", staged_png),
+            ("copy", media / f"{slug}.mp4", staged_video),
+            ("probe", probe_command(staged_video)),  # probed on the staged copy
+            ("validate", staged_png),
+            ("copy", staged_png, png),  # published only after both validations
+            ("copy", staged_video, video),
         ]
         report.append(
             {
@@ -352,7 +430,9 @@ def test_main_re_renders_into_an_existing_out_tree_without_clobbering(monkeypatc
     monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
     commands: list[list[str]] = []
     monkeypatch.setattr(render, "run", commands.append)
-    monkeypatch.setattr(render, "newest", lambda pattern: tmp_path / "media" / pattern.replace("*", "-found"))
+    monkeypatch.setattr(
+        render, "newest", lambda pattern, since=None: tmp_path / "media" / pattern.replace("*", "-found")
+    )
     monkeypatch.setattr(render.shutil, "copy2", lambda source, target: None)
     monkeypatch.setattr(render.subprocess, "check_output", lambda command, text: "3.249\n")
     monkeypatch.setattr(
@@ -382,7 +462,9 @@ def test_main_with_no_scenes_renders_nothing_and_prints_an_empty_report(
     probes: list[list[str]] = []
     monkeypatch.setattr(render, "run", commands.append)
     monkeypatch.setattr(
-        render, "newest", lambda pattern: pytest.fail(f"newest({pattern!r}) called with no scenes")
+        render,
+        "newest",
+        lambda pattern, since=None: pytest.fail(f"newest({pattern!r}) called with no scenes"),
     )
     monkeypatch.setattr(
         render.shutil, "copy2", lambda source, target: copies.append((source, target))
@@ -406,24 +488,29 @@ def test_main_with_no_scenes_renders_nothing_and_prints_an_empty_report(
     assert capsys.readouterr().out == "[]\n"  # the final report degenerates to an empty list
 
 
-def test_main_aborts_without_a_report_when_the_delivered_still_fails_validation(
+def test_main_preserves_the_existing_pair_when_the_staged_still_fails_validation(
     monkeypatch, tmp_path, capsys
 ) -> None:
     out = tmp_path / "out"
+    out.mkdir()
+    first_slug, first_class = next(iter(SCENES.items()))
+    old_still = out / f"{first_slug}-transparent.png"
+    old_still.write_bytes(PREVIOUS_STILL)
+    old_movie = out / f"{first_slug}.mp4"
+    old_movie.write_bytes(PREVIOUS_MOVIE)
     media = tmp_path / "media"
     media.mkdir()
     still_source = media / "still.png"
-    still_source.write_bytes(PNG_MAGIC)  # real bytes: the real copy2 must deliver them unchanged
+    still_source.write_bytes(PNG_MAGIC)  # real bytes: the real copy2 must stage them unchanged
     movie_source = media / "movie.mp4"
     movie_source.write_bytes(MP4_FTYP)
-    first_slug, first_class = next(iter(SCENES.items()))
     monkeypatch.setattr(render, "OUT", out)
     monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
     commands: list[list[str]] = []
     probes: list[list[str]] = []
     monkeypatch.setattr(render, "run", commands.append)
 
-    def newest_both_artifacts(pattern: str) -> Path:
+    def newest_both_artifacts(pattern: str, since: float | None = None) -> Path:
         return movie_source if pattern == f"{first_slug}.mp4" else still_source
 
     monkeypatch.setattr(render, "newest", newest_both_artifacts)
@@ -448,23 +535,16 @@ def test_main_aborts_without_a_report_when_the_delivered_still_fails_validation(
     assert "-s" in commands[0]  # the first is the transparent still render...
     assert commands[1][-2:] == [str(render.SOURCE), first_class]
     assert "-s" not in commands[1]  # ...the second the movie render
-    assert probes == [
-        [
-            "ffprobe",
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=nw=1:nk=1",
-            str(out / f"{first_slug}.mp4"),  # the probe targets the delivered copy, not the media source
-        ]
-    ]
-    delivered = sorted(out.iterdir())
-    assert delivered == sorted([out / f"{first_slug}-transparent.png", out / f"{first_slug}.mp4"])
-    assert (out / f"{first_slug}-transparent.png").read_bytes() == PNG_MAGIC
-    assert (out / f"{first_slug}.mp4").read_bytes() == MP4_FTYP  # no rollback of delivered artifacts
-    assert capsys.readouterr().out == ""  # the per-scene line follows validation, so nothing is printed
+    assert len(probes) == 1  # the staged video is probed before the still is validated
+    staged = Path(probes[0][-1])
+    assert probes[0] == probe_command(staged)
+    assert staged.name == f"{first_slug}.mp4"  # the probe targets the staged copy...
+    assert staged.parent != out  # ...not the delivered pair in out/...
+    assert staged.parent != media  # ...and not the media source either
+    assert sorted(out.iterdir()) == sorted([old_still, old_movie])  # nothing partial published
+    assert old_still.read_bytes() == PREVIOUS_STILL
+    assert old_movie.read_bytes() == PREVIOUS_MOVIE  # the previous pair survives byte for byte
+    assert capsys.readouterr().out == ""  # the per-scene line follows publication, so nothing is printed
 
 
 def test_main_aborts_without_a_report_when_manim_output_goes_missing(
@@ -476,7 +556,7 @@ def test_main_aborts_without_a_report_when_manim_output_goes_missing(
     commands: list[list[str]] = []
     monkeypatch.setattr(render, "run", commands.append)
 
-    def missing_newest(pattern: str) -> Path:
+    def missing_newest(pattern: str, since: float | None = None) -> Path:
         raise RuntimeError(f"Manim did not produce {pattern}")
 
     monkeypatch.setattr(render, "newest", missing_newest)
@@ -508,7 +588,7 @@ def test_main_keeps_completed_scenes_report_lines_when_a_later_scene_aborts(
     probes: list[list[str]] = []
     monkeypatch.setattr(render, "run", commands.append)
 
-    def newest_until_the_second_scene(pattern: str) -> Path:
+    def newest_until_the_second_scene(pattern: str, since: float | None = None) -> Path:
         if pattern == f"{second_slug}*.png":
             raise RuntimeError(f"Manim did not produce {pattern}")
         return movie_source if pattern == f"{first_slug}.mp4" else still_source
@@ -533,18 +613,10 @@ def test_main_keeps_completed_scenes_report_lines_when_a_later_scene_aborts(
     assert len(commands) == 3  # the first scene's still + movie passes, then the second scene's still pass
     assert [command[-1] for command in commands] == [first_class, first_class, second_class]
     assert "-s" in commands[0] and "-s" not in commands[1] and "-s" in commands[2]
-    assert probes == [
-        [
-            "ffprobe",
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=nw=1:nk=1",
-            str(out / f"{first_slug}.mp4"),  # only the first scene's delivered video is ever probed
-        ]
-    ]
+    assert len(probes) == 1  # only the first scene's staged video is ever probed
+    staged = Path(probes[0][-1])
+    assert probes[0] == probe_command(staged)
+    assert staged.name == f"{first_slug}.mp4" and staged.parent != out  # staged, not yet delivered
     delivered = sorted(out.iterdir())
     assert delivered == sorted([out / f"{first_slug}-transparent.png", out / f"{first_slug}.mp4"])
     assert (out / f"{first_slug}-transparent.png").read_bytes() == PNG_MAGIC
@@ -579,22 +651,27 @@ def test_main_refuses_to_render_when_out_is_occupied_by_a_regular_file(monkeypat
     assert out.read_text() == "occupied"  # and the occupying file is left untouched
 
 
-def test_main_aborts_mid_scene_when_the_movie_artifact_goes_missing(
+def test_main_preserves_the_existing_pair_when_the_movie_artifact_goes_missing(
     monkeypatch, tmp_path, capsys
 ) -> None:
     out = tmp_path / "out"
+    out.mkdir()
+    first_slug, first_class = next(iter(SCENES.items()))
+    old_still = out / f"{first_slug}-transparent.png"
+    old_still.write_bytes(PREVIOUS_STILL)
+    old_movie = out / f"{first_slug}.mp4"
+    old_movie.write_bytes(PREVIOUS_MOVIE)
     media = tmp_path / "media"
     media.mkdir()
     still_source = media / "still.png"
-    still_source.write_bytes(PNG_MAGIC)  # real bytes: the real copy2 must deliver them unchanged
-    first_slug, first_class = next(iter(SCENES.items()))
+    still_source.write_bytes(PNG_MAGIC)  # real bytes: the real copy2 must stage them unchanged
     monkeypatch.setattr(render, "OUT", out)
     monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
     commands: list[list[str]] = []
     probes: list[list[str]] = []
     monkeypatch.setattr(render, "run", commands.append)
 
-    def newest_until_the_movie(pattern: str) -> Path:
+    def newest_until_the_movie(pattern: str, since: float | None = None) -> Path:
         if pattern == f"{first_slug}.mp4":
             raise RuntimeError(f"Manim did not produce {pattern}")
         return still_source
@@ -613,7 +690,116 @@ def test_main_aborts_mid_scene_when_the_movie_artifact_goes_missing(
     assert "-s" in commands[0]  # the first is the transparent still render...
     assert commands[1][-2:] == [str(render.SOURCE), first_class]
     assert "-s" not in commands[1]  # ...the second the movie render
-    assert probes == []  # a duration is never probed for an undelivered video
-    assert list(out.iterdir()) == [out / f"{first_slug}-transparent.png"]  # delivered still stays: no rollback
-    assert (out / f"{first_slug}-transparent.png").read_bytes() == PNG_MAGIC
+    assert probes == []  # a duration is never probed for a video that was never found
+    assert sorted(out.iterdir()) == sorted([old_still, old_movie])  # nothing partial published
+    assert old_still.read_bytes() == PREVIOUS_STILL
+    assert old_movie.read_bytes() == PREVIOUS_MOVIE  # the still waits for the movie: no mixed pair
+    assert capsys.readouterr().out == ""  # no per-scene line and no final report on the error path
+
+
+def test_main_preserves_the_existing_pair_when_the_movie_render_fails(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    out = tmp_path / "out"
+    out.mkdir()
+    first_slug, first_class = next(iter(SCENES.items()))
+    old_still = out / f"{first_slug}-transparent.png"
+    old_still.write_bytes(PREVIOUS_STILL)
+    old_movie = out / f"{first_slug}.mp4"
+    old_movie.write_bytes(PREVIOUS_MOVIE)
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    commands: list[list[str]] = []
+    monkeypatch.setattr(
+        render, "newest", lambda pattern, since=None: tmp_path / "media" / pattern.replace("*", "-found")
+    )
+    monkeypatch.setattr(render.shutil, "copy2", lambda source, target: pytest.fail("no delivery on a failed render"))
+    monkeypatch.setattr(render.subprocess, "check_output", lambda command, text: pytest.fail("nothing to probe"))
+
+    def failing_movie_render(command: list[str]) -> None:
+        commands.append(command)
+        if "-s" not in command:  # the movie pass blows up mid-render
+            raise subprocess.CalledProcessError(1, command)
+
+    monkeypatch.setattr(render, "run", failing_movie_render)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        render.main()
+
+    assert len(commands) == 2  # the still render succeeded, the movie render failed
+    assert commands[1][-1] == first_class and "-s" not in commands[1]
+    assert sorted(out.iterdir()) == sorted([old_still, old_movie])  # nothing partial published
+    assert old_still.read_bytes() == PREVIOUS_STILL  # the fresh still was never staged into out/...
+    assert old_movie.read_bytes() == PREVIOUS_MOVIE  # ...so the old pair stays consistent
+    assert capsys.readouterr().out == ""  # no per-scene line and no final report on the error path
+
+
+def test_main_preserves_the_existing_pair_when_the_video_duration_is_invalid(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    out = tmp_path / "out"
+    out.mkdir()
+    first_slug = next(iter(SCENES))
+    old_still = out / f"{first_slug}-transparent.png"
+    old_still.write_bytes(PREVIOUS_STILL)
+    old_movie = out / f"{first_slug}.mp4"
+    old_movie.write_bytes(PREVIOUS_MOVIE)
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    monkeypatch.setattr(render, "run", lambda command: None)
+    monkeypatch.setattr(
+        render, "newest", lambda pattern, since=None: tmp_path / "media" / pattern.replace("*", "-found")
+    )
+    copies: list[tuple[Path, Path]] = []
+    monkeypatch.setattr(render.shutil, "copy2", lambda source, target: copies.append((source, target)))
+    monkeypatch.setattr(render.subprocess, "check_output", lambda command, text: "0.000\n")
+    monkeypatch.setattr(
+        render,
+        "validate_png",
+        lambda path: {"size": (854, 480), "transparent_pct": 8.4, "visible_pct": 91.2, "colorful": 23456},
+    )
+
+    with pytest.raises(RuntimeError) as excinfo:
+        render.main()
+
+    assert str(excinfo.value) == f"{first_slug}.mp4: invalid video duration '0.000'"
+    final_copies = [target for _, target in copies if target.parent == out]
+    assert final_copies == []  # the pair is published only after a finite positive duration
+    assert sorted(out.iterdir()) == sorted([old_still, old_movie])
+    assert old_still.read_bytes() == PREVIOUS_STILL
+    assert old_movie.read_bytes() == PREVIOUS_MOVIE
+    assert capsys.readouterr().out == ""  # no per-scene line and no final report on the error path
+
+
+def test_main_preserves_the_existing_pair_when_media_only_has_stale_matches(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    out = tmp_path / "out"
+    out.mkdir()
+    first_slug = next(iter(SCENES))
+    old_still = out / f"{first_slug}-transparent.png"
+    old_still.write_bytes(PREVIOUS_STILL)
+    old_movie = out / f"{first_slug}.mp4"
+    old_movie.write_bytes(PREVIOUS_MOVIE)
+    media = tmp_path / "media"  # the real newest() runs against this tree
+    stale_dir = media / "videos" / "480p15"
+    stale_dir.mkdir(parents=True)
+    stale_png = stale_dir / f"{first_slug}.png"
+    stale_png.write_bytes(PNG_MAGIC)
+    os.utime(stale_png, (1_000_000_000, 1_000_000_000))  # long predates this render run
+    monkeypatch.setattr(render, "OUT", out)
+    monkeypatch.setattr(render, "MEDIA", media)
+    monkeypatch.setattr(render.shutil, "which", lambda name: "/usr/bin/ffprobe")
+    commands: list[list[str]] = []
+    monkeypatch.setattr(render, "run", commands.append)
+
+    with pytest.raises(RuntimeError) as excinfo:
+        render.main()
+
+    assert str(excinfo.value) == f"Manim did not produce {first_slug}*.png"
+    assert len(commands) == 1  # only the still render ran before the stale match was rejected
+    assert commands[0][0] == "manim" and "-s" in commands[0]
+    assert sorted(out.iterdir()) == sorted([old_still, old_movie])  # nothing partial published
+    assert old_still.read_bytes() == PREVIOUS_STILL
+    assert old_movie.read_bytes() == PREVIOUS_MOVIE  # a stale artifact never replaces the pair
     assert capsys.readouterr().out == ""  # no per-scene line and no final report on the error path
